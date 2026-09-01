@@ -51,7 +51,12 @@ function PhotoBubblePageEditable({
           title="Click to replace this photo"
         />
       ) : (
-        <button
+        // Deliberately a div, not a button: this whole page also renders
+        // inside the thumbnail rail's <button>, and a button nested in a
+        // button is invalid HTML (React flags it as a hydration error).
+        // The click is handled here for the main stage; in a thumbnail the
+        // rail sets pointer-events:none, so selecting the slide still wins.
+        <div
           onClick={() => onReplacePhoto(index)}
           style={{
             position: "absolute",
@@ -60,7 +65,6 @@ function PhotoBubblePageEditable({
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
             background: "#d8d3c8",
-            border: "none",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -75,7 +79,7 @@ function PhotoBubblePageEditable({
         >
           <span style={{ fontSize: 140, lineHeight: 1 }}>+</span>
           Click to add a photo
-        </button>
+        </div>
       )}
 
       <div style={{ display: "flex", position: "absolute", left: 0, top: 210, width: CANVAS_WIDTH, justifyContent: "center", padding: "0 70px" }}>
