@@ -132,13 +132,28 @@ export default function SlideStage({
     });
   }
 
+  /**
+   * Keeps the floating picker fully on screen. It opens at the point that was
+   * tapped, which on a narrow phone can be close enough to an edge that the
+   * panel would hang off it.
+   */
+  function pickerPoint(e: React.MouseEvent) {
+    const PANEL_W = 210;
+    const PANEL_H = 240;
+    const margin = 8;
+    return {
+      x: Math.min(Math.max(e.clientX, margin), Math.max(margin, window.innerWidth - PANEL_W - margin)),
+      y: Math.min(Math.max(e.clientY, margin), Math.max(margin, window.innerHeight - PANEL_H - margin)),
+    };
+  }
+
   const interactions = {
     patch,
     onBackgroundClick: (e: React.MouseEvent, pageIndex: number) =>
-      setPicker({ kind: "background", index: pageIndex, x: e.clientX, y: e.clientY }),
+      setPicker({ kind: "background", index: pageIndex, ...pickerPoint(e) }),
     onReplacePhoto,
     onBubbleClick: (e: React.MouseEvent, index: number, bubbleIndex: number) =>
-      setPicker({ kind: "bubble", index, bubbleIndex, x: e.clientX, y: e.clientY }),
+      setPicker({ kind: "bubble", index, bubbleIndex, ...pickerPoint(e) }),
     onAddBubble: addBubble,
     onRemoveBubble: removeBubble,
   };

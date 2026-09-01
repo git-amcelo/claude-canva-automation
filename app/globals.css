@@ -1795,3 +1795,199 @@ input[type="number"] {
 .share-expiry {
   margin: 10px 0 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Touch and small-screen handling
+
+   Three classes of problem this addresses:
+   1. Controls revealed on :hover are unreachable on a touch device — there is
+      no hover, so "add bubble", "delete bubble" and "delete slide" simply
+      could not be used on a phone.
+   2. iOS zooms the whole page when a form control smaller than 16px is
+      focused, which throws the layout off and is awkward to undo.
+   3. Several targets were below the 44px Apple touch guideline.
+--------------------------------------------------------------------------- */
+
+/* Two conditions, because either alone leaves a gap: a touch device has no
+   hover at all, and a narrow screen is where these controls matter most and
+   are hardest to discover. A phone matches both. */
+@media (hover: none), (max-width: 620px) {
+  .stage-thumb-wrap .stage-thumb-remove,
+  .stage-canvas .bubble-add,
+  .stage-canvas .bubble-remove {
+    opacity: 1;
+  }
+}
+
+/* Bigger hit areas wherever a finger is likely — touch devices, and any
+   screen narrow enough to be a phone. */
+@media (hover: none), (max-width: 620px) {
+
+  /* Bigger hit areas for the controls that sit on the canvas. */
+  .stage-thumb-remove {
+    width: 30px;
+    height: 30px;
+    font-size: 17px;
+  }
+
+  .cropper-handle {
+    width: 26px;
+    height: 26px;
+  }
+  .cropper-handle.nw { top: -13px; left: -13px; }
+  .cropper-handle.ne { top: -13px; right: -13px; }
+  .cropper-handle.sw { bottom: -13px; left: -13px; }
+  .cropper-handle.se { bottom: -13px; right: -13px; }
+}
+
+@media (max-width: 620px) {
+  body {
+    padding: 20px 12px 48px;
+  }
+
+  .panel {
+    padding: 24px 18px 20px;
+  }
+
+  .section-panel {
+    padding: 18px 16px;
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+
+  .subtitle {
+    font-size: 14.5px;
+    margin-bottom: 22px;
+  }
+
+  /* 16px minimum stops iOS zooming the page when a field is focused. */
+  textarea,
+  input[type="text"],
+  input[type="number"],
+  select,
+  .count-select {
+    font-size: 16px;
+  }
+
+  .prompt-input {
+    min-height: 96px;
+  }
+
+  /* Steps stay on one line by dropping the connecting rules and tightening up. */
+  .steps {
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .step-rule {
+    display: none;
+  }
+  .step {
+    font-size: 11.5px;
+    padding: 6px 4px;
+  }
+
+  /* Full-width, comfortably tappable buttons. */
+  .generate-row,
+  .export-row,
+  .step-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .generate-row .btn,
+  .export-row .btn,
+  .step-nav .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  .chip-row,
+  .count-row,
+  .variant-row {
+    gap: 6px;
+  }
+
+  /* The editor: canvas full width, thumbnails a horizontal strip beneath it
+     rather than a grid competing for the same narrow space. */
+  .stage {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .stage-main {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+  .stage-rail {
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    gap: 8px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .stage-thumb-wrap {
+    flex: 0 0 76px;
+  }
+  .stage-thumb.add-tile {
+    flex: 0 0 76px;
+  }
+
+  /* Modals get the full width of the screen. */
+  .cropper,
+  .share-modal {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+  .cropper-backdrop {
+    padding: 12px;
+  }
+  .cropper-stage,
+  .cropper-stage img {
+    max-height: 44vh;
+  }
+  .cropper-actions {
+    flex-wrap: wrap;
+  }
+  .cropper-actions .btn {
+    flex: 1 1 auto;
+    min-height: 46px;
+    justify-content: center;
+  }
+  .cropper-ratios {
+    gap: 6px;
+  }
+
+  .share-link {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .share-link .btn {
+    min-height: 44px;
+    justify-content: center;
+  }
+  .share-qr {
+    min-height: 0;
+  }
+}
+
+/* Respect the notch and home indicator if the page is ever rendered
+   edge-to-edge. Resolves to 0 otherwise, so it costs nothing today. */
+body {
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(96px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 620px) {
+  body {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(48px, env(safe-area-inset-bottom));
+  }
+}
