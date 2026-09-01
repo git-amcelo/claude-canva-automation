@@ -63,7 +63,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 20px 96px;
+  padding: 28px 20px 32px;
   background: var(--bg);
   color: var(--ink);
   font-family: -apple-system, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -151,7 +151,7 @@ button {
 }
 
 .panel {
-  padding: 44px 48px 30px;
+  padding: 28px 36px 22px;
 }
 
 .section-panel {
@@ -166,7 +166,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
 }
 
 .brand {
@@ -233,7 +233,7 @@ button {
 }
 
 .eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -242,8 +242,8 @@ button {
 }
 
 h1 {
-  margin: 0 0 12px;
-  font-size: 32px;
+  margin: 0 0 8px;
+  font-size: 27px;
   font-weight: 650;
   letter-spacing: -0.022em;
   line-height: 1.15;
@@ -251,9 +251,9 @@ h1 {
 }
 
 .subtitle {
-  margin: 0 0 30px;
-  max-width: 54ch;
-  font-size: 15.5px;
+  margin: 0 0 16px;
+  max-width: 60ch;
+  font-size: 14.5px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
@@ -267,7 +267,7 @@ h1 {
   flex-wrap: wrap;
   row-gap: 10px;
   gap: 0;
-  margin: 0 0 26px;
+  margin: 0 0 16px;
   padding: 0;
 }
 .step {
@@ -814,7 +814,7 @@ input[type="number"] {
 }
 
 .prompt-input {
-  min-height: 110px;
+  min-height: 84px;
   font-size: 15px;
   line-height: 1.55;
 }
@@ -823,7 +823,7 @@ input[type="number"] {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .chip-btn {
@@ -1012,7 +1012,7 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .count-select {
@@ -1043,7 +1043,7 @@ input[type="number"] {
 }
 
 .photo-details {
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .photo-details summary {
@@ -1062,12 +1062,12 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 20px;
+  margin-top: 14px;
   flex-wrap: wrap;
 }
 
 .generate-btn {
-  padding: 14px 28px;
+  padding: 12px 26px;
   font-size: 15px;
 }
 
@@ -1235,7 +1235,7 @@ input[type="number"] {
   border: 1.5px solid var(--line);
   border-radius: 999px;
   gap: 2px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .mode-toggle button {
@@ -1260,7 +1260,7 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 /* Editable on-slide text (click straight on the slide, like PPT) */
@@ -1862,12 +1862,16 @@ input[type="number"] {
     margin-bottom: 22px;
   }
 
-  /* 16px minimum stops iOS zooming the page when a field is focused. */
+  /* 16px minimum stops iOS zooming the page when a field is focused.
+     .prompt-input is listed explicitly because its class selector outranks the
+     element ones above. */
   textarea,
   input[type="text"],
   input[type="number"],
   select,
-  .count-select {
+  .count-select,
+  .prompt-input,
+  .share-link input {
     font-size: 16px;
   }
 
@@ -2009,7 +2013,7 @@ body {
   display: none;
   align-items: center;
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 10px;
   padding: 10px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius-card);
