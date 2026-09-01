@@ -6,6 +6,17 @@ const ALLOWED_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/web
 export class UnsupportedImageError extends Error {}
 
 /**
+ * Photos are returned as JPEG, not PNG.
+ *
+ * These data URLs ride in the request body of every render and share call, and
+ * PNG is a poor fit for photographs — a 1080x1350 photo encodes to roughly 3MB,
+ * so two of them blow past the hosting platform's ~4.5MB body limit and the
+ * request fails with an HTML error page. JPEG at 88 is visually equivalent here
+ * and about a tenth of the size. Instagram re-encodes to JPEG regardless.
+ */
+const PHOTO_JPEG = { quality: 88, mozjpeg: true } as const;
+
+/**
  * Crops/resizes an uploaded photo to exactly the carousel canvas size and
  * returns it as a base64 PNG data URI, ready to embed as an <img src>.
  * Rejects HEIC/HEIF and anything else not reliably decodable server-side —
@@ -22,10 +33,10 @@ export async function cropPhotoToCanvas(buffer: Buffer, mimeType: string): Promi
   const output = await sharp(buffer)
     .rotate() // apply EXIF orientation
     .resize(CANVAS_WIDTH, CANVAS_HEIGHT, { fit: "cover", position: "attention" })
-    .png()
+    .jpeg(PHOTO_JPEG)
     .toBuffer();
 
-  return `data:image/png;base64,${output.toString("base64")}`;
+  return `data:image/jpeg;base64,${output.toString("base64")}`;
 }
 
 /** A crop box in the source image's own pixel coordinates. */
@@ -63,8 +74,8 @@ export async function cropPhotoToBox(buffer: Buffer, mimeType: string, box: Crop
   const output = await sharp(upright)
     .extract({ left, top, width: cropWidth, height: cropHeight })
     .resize(CANVAS_WIDTH, CANVAS_HEIGHT, { fit: "cover", position: "attention" })
-    .png()
+    .jpeg(PHOTO_JPEG)
     .toBuffer();
 
-  return `data:image/png;base64,${output.toString("base64")}`;
+  return `data:image/jpeg;base64,${output.toString("base64")}`;
 }

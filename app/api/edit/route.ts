@@ -6,7 +6,8 @@ import type { GenerateCopyResult } from "@/lib/llm";
 import type { Variant } from "@/lib/templates/shared/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+// 60s is the Hobby-plan ceiling on Vercel; declaring more fails the build.
+export const maxDuration = 60;
 
 interface RequestBody {
   copy: GenerateCopyResult;

@@ -8,6 +8,7 @@ import SlideStage from "@/components/preview/SlideStage";
 import { buildImageZip, downloadBlob } from "@/lib/zip";
 import { buildBlankCopy } from "@/lib/blankCopy";
 import { pickPhotoFiles, uploadPhotoFile } from "@/lib/uploadPhoto";
+import { readJson } from "@/lib/apiClient";
 import PhotoCropper from "@/components/PhotoCropper";
 import SharePhoneModal from "@/components/SharePhoneModal";
 import type { GenerateCopyResult } from "@/lib/llm";
@@ -148,8 +149,7 @@ export default function Page() {
           slideCount: slideCountChoice ?? undefined,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to generate the post.");
+      const json = await readJson<{ copy: GenerateCopyResult; selection: Selection }>(res, "Failed to generate the post.");
       setCopy(json.copy);
       setSelection(json.selection);
       setStep(2);
@@ -298,8 +298,7 @@ export default function Page() {
           photoDataUrls: photoDataUrls.length > 0 ? photoDataUrls : undefined,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to apply the edit.");
+      const json = await readJson<{ copy: GenerateCopyResult }>(res, "Failed to apply the edit.");
       setCopy(json.copy);
       setEditInstruction("");
     } catch (err) {
@@ -317,8 +316,7 @@ export default function Page() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input: buildRenderInput(copy, selection.variant) }),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Failed to render images.");
+    const json = await readJson<{ slides: { index: number; base64: string }[] }>(res, "Failed to render images.");
     return json.slides;
   }
 
@@ -356,8 +354,7 @@ export default function Page() {
           firstComment: copy.caption.firstComment,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to create the share link.");
+      const json = await readJson<{ url: string; expiresAt: number }>(res, "Failed to create the share link.");
       setShare({ url: json.url, expiresAt: json.expiresAt });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create the share link.");
@@ -376,9 +373,8 @@ export default function Page() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: buildRenderInput(copy, selection.variant), pageIndices: [index] }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to render the slide.");
-      const base64 = json.slides[0].base64 as string;
+      const json = await readJson<{ slides: { base64: string }[] }>(res, "Failed to render the slide.");
+      const base64 = json.slides[0].base64;
       const a = document.createElement("a");
       a.href = `data:image/png;base64,${base64}`;
       a.download = `slide-${index + 1}.png`;

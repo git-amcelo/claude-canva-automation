@@ -7,9 +7,10 @@ import type { GenerateCopyResult } from "@/lib/llm";
 import type { TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
 export const runtime = "nodejs";
-// Routing + copy + up to 10 parallel renders in one request. Local Ollama
-// inference is the slow path; Anthropic typically completes well under this.
-export const maxDuration = 120;
+// Routing + copy for up to 10 slides. 60s is the ceiling on Vercel's Hobby
+// plan — declaring more fails the build outright, so this stays at the limit
+// that works everywhere. Local Ollama is the slow path; Anthropic is well under.
+export const maxDuration = 60;
 
 interface RequestBody {
   /** The natural-language post idea — the only required field. */

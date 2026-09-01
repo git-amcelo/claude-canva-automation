@@ -8,7 +8,7 @@ import type { RenderSlideInput } from "@/lib/templates/shared/types";
 export const runtime = "nodejs";
 // Renders up to 10 slides, re-encodes each, then uploads them — the slowest
 // path in the app, so it gets the same headroom as /api/generate.
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 interface RequestBody {
   input: RenderSlideInput;

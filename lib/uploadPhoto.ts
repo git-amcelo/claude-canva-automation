@@ -1,4 +1,5 @@
 import { resizeImageForUpload } from "@/lib/clientImage";
+import { readJson } from "@/lib/apiClient";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -29,9 +30,12 @@ export async function uploadPhotoFile(file: File, crop?: { x: number; y: number;
   if (crop) formData.append("crop", JSON.stringify(crop));
 
   const res = await fetch("/api/upload-photo", { method: "POST", body: formData });
-  const json = await res.json();
-  if (!res.ok) throw new PhotoUploadError(json.error || "Upload failed.");
-  return json.photoDataUrl as string;
+  try {
+    const json = await readJson<{ photoDataUrl: string }>(res, "Upload failed.");
+    return json.photoDataUrl;
+  } catch (err) {
+    throw new PhotoUploadError(err instanceof Error ? err.message : "Upload failed.");
+  }
 }
 
 /**
