@@ -74,7 +74,7 @@ const STEP_HEADINGS: Record<number, { title: string; subtitle: (mode: ContentMod
   3: {
     title: "Export your carousel.",
     subtitle: () =>
-      "Download the slides, or send them to your phone to post from the Instagram app. Copy the caption and first comment here — the link belongs in the first comment, since Instagram captions can't have clickable links.",
+      "Download the slides, or send them to your phone to post from the Instagram app. The caption travels with the phone link; remember the URL belongs in the first comment, since Instagram captions can't have clickable links.",
   },
 };
 
@@ -96,7 +96,6 @@ export default function Page() {
   const [exportingIndex, setExportingIndex] = useState<number | null>(null);
   const [exportingAll, setExportingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
   // Photos are cropped one at a time before use: `cropQueue` holds the files
   // still waiting, and `cropTarget` says where the finished crop should land —
   // appended as new slides, or swapped into an existing one.
@@ -386,11 +385,6 @@ export default function Page() {
     }
   }
 
-  async function copyText(field: string, text: string) {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 1500);
-  }
 
   function handleStartOver() {
     setPrompt("");
@@ -696,12 +690,6 @@ export default function Page() {
                   ) : (
                     "📱 Send to phone"
                   )}
-                </button>
-                <button className="btn secondary" onClick={() => copyText("caption", copy.caption.caption)}>
-                  {copiedField === "caption" ? "Copied ✓" : "Copy caption"}
-                </button>
-                <button className="btn secondary" onClick={() => copyText("comment", copy.caption.firstComment)}>
-                  {copiedField === "comment" ? "Copied ✓" : "Copy first comment"}
                 </button>
               </div>
             </>
