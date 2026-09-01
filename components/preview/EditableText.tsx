@@ -101,12 +101,18 @@ export default function EditableText({
   // The one thing that has to move: in a row, justify-content centred the text
   // horizontally; in a column that job belongs to align-items.
   const { justifyContent, ...restStyle } = style ?? {};
-  const layoutStyle: CSSProperties = {
-    ...restStyle,
-    display: "flex",
-    flexDirection: "column",
-    ...(justifyContent ? { alignItems: justifyContent } : {}),
-  };
+  // A caller can opt out — the photo bubble asks for `display: inline` so its
+  // background follows each line's width instead of boxing the whole block.
+  // Inline handles Enter's <br> natively, so it needs no flex treatment.
+  const layoutStyle: CSSProperties =
+    style?.display && style.display !== "flex"
+      ? { ...style }
+      : {
+          ...restStyle,
+          display: "flex",
+          flexDirection: "column",
+          ...(justifyContent ? { alignItems: justifyContent } : {}),
+        };
 
   return (
     <div

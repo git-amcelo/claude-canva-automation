@@ -52,10 +52,27 @@ export type GenerateCopyResult =
   | { family: "photoBubble"; slides: PhotoBubbleSlide[]; caption: CaptionCopy }
   | { family: "textPost"; slides: TextPostSlide[]; caption: CaptionCopy };
 
-/** The tweet template always posts as the brand — overwrite whatever the model returned. */
+/**
+ * Brings model output in line with what the templates expect:
+ *  - the tweet template always posts as the brand, whatever the model said;
+ *  - the model writes one `bubbleText` per photo slide, but a slide actually
+ *    holds a list of bubbles, so that single string becomes the first one.
+ */
 export function enforceStaticTweetIdentity(copy: GenerateCopyResult): GenerateCopyResult {
-  if (copy.family !== "tweetCard") return copy;
-  return { ...copy, slides: copy.slides.map((s) => ({ ...s, name: TWEET_NAME, handle: TWEET_HANDLE })) };
+  if (copy.family === "tweetCard") {
+    return { ...copy, slides: copy.slides.map((s) => ({ ...s, name: TWEET_NAME, handle: TWEET_HANDLE })) };
+  }
+  if (copy.family === "photoBubble") {
+    return { ...copy, slides: copy.slides.map(normalizePhotoBubbleSlide) };
+  }
+  return copy;
+}
+
+/** Accepts either the model's `{ bubbleText }` or an already-normalised slide. */
+function normalizePhotoBubbleSlide(slide: PhotoBubbleSlide | { bubbleText?: string }): PhotoBubbleSlide {
+  if ("bubbles" in slide && Array.isArray(slide.bubbles)) return slide;
+  const text = "bubbleText" in slide ? (slide.bubbleText ?? "") : "";
+  return { bubbles: [{ text }] };
 }
 
 export interface GenerateCopyInput {

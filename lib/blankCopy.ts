@@ -49,5 +49,5 @@ export function buildBlankCopy(family: TemplateFamily, opts: { slideCount: numbe
 
   // photoBubble — one slide per photo; text and photos are both filled in on
   // the canvas itself, so every slide starts empty.
-  return { family, caption, slides: Array.from({ length: opts.slideCount }, () => ({ bubbleText: "" })) };
+  return { family, caption, slides: Array.from({ length: opts.slideCount }, () => ({ bubbles: [{ text: "" }] })) };
 }

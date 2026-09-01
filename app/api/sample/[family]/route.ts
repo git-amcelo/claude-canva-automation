@@ -103,7 +103,7 @@ async function renderSample(family: TemplateFamily, variant: Variant): Promise<B
   }
   if (family === "photoBubble") {
     const photo = await samplePhotoDataUrl();
-    return renderToPngBuffer(renderPhotoBubblePage(variant, { bubbleText: "Your daily choices decide your results" }, photo));
+    return renderToPngBuffer(renderPhotoBubblePage(variant, { bubbles: [{ text: "Your daily choices\ndecide your results" }] }, photo));
   }
   const marks = await loadBrandMarks();
   return renderToPngBuffer(

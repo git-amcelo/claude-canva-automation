@@ -10,7 +10,7 @@ import type { Variant } from "@/lib/templates/shared/types";
 /** Which element the colour picker is currently editing, and where to float it. */
 type PickerTarget =
   | { kind: "background"; index: number; x: number; y: number }
-  | { kind: "bubble"; index: number; x: number; y: number };
+  | { kind: "bubble"; index: number; bubbleIndex: number; x: number; y: number };
 
 /** Position keys are prefixed by section, in page order. */
 const COLOR_BLOCK_SECTIONS = ["hook", "problem", "fix", "features", "cta"] as const;
@@ -80,10 +80,26 @@ export default function SlideStage({
     });
   }
 
-  function setBubbleColor(index: number, color: string | undefined) {
+  function setBubbleColor(index: number, bubbleIndex: number, color: string | undefined) {
     patch((d) => {
       if (d.family !== "photoBubble") return;
-      d.slides[index] = { ...d.slides[index], bubbleColor: color };
+      d.slides[index].bubbles[bubbleIndex] = { ...d.slides[index].bubbles[bubbleIndex], color };
+    });
+  }
+
+  function addBubble(slideIndex: number) {
+    patch((d) => {
+      if (d.family !== "photoBubble") return;
+      d.slides[slideIndex].bubbles.push({ text: "" });
+    });
+  }
+
+  function removeBubble(slideIndex: number, bubbleIndex: number) {
+    patch((d) => {
+      if (d.family !== "photoBubble") return;
+      // Never drop to zero — a photo with no bubble has nothing to edit.
+      if (d.slides[slideIndex].bubbles.length <= 1) return;
+      d.slides[slideIndex].bubbles.splice(bubbleIndex, 1);
     });
   }
 
@@ -96,8 +112,9 @@ export default function SlideStage({
       );
     }
     if (copy.family === "photoBubble") {
-      const offset = copy.slides[clampedActive]?.bubblePosition;
-      return !!offset && (offset.x !== 0 || offset.y !== 0);
+      return (copy.slides[clampedActive]?.bubbles ?? []).some(
+        (b) => !!b.position && (b.position.x !== 0 || b.position.y !== 0)
+      );
     }
     return false;
   })();
@@ -110,8 +127,7 @@ export default function SlideStage({
         const kept = Object.fromEntries(Object.entries(d.slides.positions ?? {}).filter(([key]) => !key.startsWith(`${prefix}.`)));
         d.slides.positions = Object.keys(kept).length > 0 ? kept : undefined;
       } else if (d.family === "photoBubble") {
-        const { bubblePosition: _dropped, ...rest } = d.slides[clampedActive];
-        d.slides[clampedActive] = rest;
+        d.slides[clampedActive].bubbles = d.slides[clampedActive].bubbles.map(({ position: _dropped, ...rest }) => rest);
       }
     });
   }
@@ -121,7 +137,10 @@ export default function SlideStage({
     onBackgroundClick: (e: React.MouseEvent, pageIndex: number) =>
       setPicker({ kind: "background", index: pageIndex, x: e.clientX, y: e.clientY }),
     onReplacePhoto,
-    onBubbleClick: (e: React.MouseEvent, index: number) => setPicker({ kind: "bubble", index, x: e.clientX, y: e.clientY }),
+    onBubbleClick: (e: React.MouseEvent, index: number, bubbleIndex: number) =>
+      setPicker({ kind: "bubble", index, bubbleIndex, x: e.clientX, y: e.clientY }),
+    onAddBubble: addBubble,
+    onRemoveBubble: removeBubble,
   };
 
   const currentPickerColor =
@@ -130,7 +149,7 @@ export default function SlideStage({
         ? copy.slides.backgrounds?.[picker.index]
         : undefined
       : picker?.kind === "bubble" && copy.family === "photoBubble"
-        ? copy.slides[picker.index]?.bubbleColor
+        ? copy.slides[picker.index]?.bubbles[picker.bubbleIndex]?.color
         : undefined;
 
   return (
@@ -233,10 +252,12 @@ export default function SlideStage({
           <ColorPicker
             title={picker.kind === "background" ? "Slide background" : "Bubble colour"}
             value={currentPickerColor}
-            onChange={(color) => (picker.kind === "background" ? setBackgroundColor(picker.index, color) : setBubbleColor(picker.index, color))}
+            onChange={(color) =>
+              picker.kind === "background" ? setBackgroundColor(picker.index, color) : setBubbleColor(picker.index, picker.bubbleIndex, color)
+            }
             onReset={() => {
               if (picker.kind === "background") setBackgroundColor(picker.index, undefined);
-              else setBubbleColor(picker.index, undefined);
+              else setBubbleColor(picker.index, picker.bubbleIndex, undefined);
               setPicker(null);
             }}
             onClose={() => setPicker(null)}

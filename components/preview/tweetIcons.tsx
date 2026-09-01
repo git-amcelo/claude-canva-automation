@@ -61,18 +61,21 @@ export function ShareIcon({ size = 22 }: { size?: number }) {
   );
 }
 
-/** Blue verified badge with a white tick — mirrors assets/icons/verified.svg. */
+/** Scalloped verified badge — mirrors assets/icons/verified.svg. */
 export function VerifiedBadge({ size = 28, style }: { size?: number; style?: React.CSSProperties }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
-      <circle cx={12} cy={12} r={12} fill="#1DA1F2" />
       <path
-        d="M17.1 8.4 10.5 15 6.9 11.4"
+        fill="#1D9BF0"
+        d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81C14.67 2.63 13.43 1.75 12 1.75s-2.67.88-3.34 2.19c-1.39-.46-2.9-.2-3.91.81S3.48 7.27 3.94 8.66C2.63 9.33 1.75 10.57 1.75 12s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.27 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.67-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z"
+      />
+      <path
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth={2.4}
+        strokeWidth={2.1}
         strokeLinecap="round"
         strokeLinejoin="round"
+        d="M16.3 9.4 10.8 14.9 7.7 11.8"
       />
     </svg>
   );

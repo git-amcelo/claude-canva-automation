@@ -19,8 +19,11 @@ export interface PageInteractions {
   onBackgroundClick: (e: React.MouseEvent, pageIndex: number) => void;
   /** photoBubble: swap the photo behind this slide. */
   onReplacePhoto: (index: number) => void;
-  /** photoBubble: recolour this slide's bubble. */
-  onBubbleClick: (e: React.MouseEvent, index: number) => void;
+  /** photoBubble: recolour one bubble on this slide. */
+  onBubbleClick: (e: React.MouseEvent, slideIndex: number, bubbleIndex: number) => void;
+  /** photoBubble: add / remove a bubble on this slide. */
+  onAddBubble: (slideIndex: number) => void;
+  onRemoveBubble: (slideIndex: number, bubbleIndex: number) => void;
 }
 
 /** Dispatches to the right editable-canvas renderer for the copy's family. */
@@ -47,6 +50,8 @@ export function renderEditablePage(
     index,
     patch,
     interactions.onReplacePhoto,
-    interactions.onBubbleClick
+    interactions.onBubbleClick,
+    interactions.onAddBubble,
+    interactions.onRemoveBubble
   );
 }

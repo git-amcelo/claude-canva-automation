@@ -188,7 +188,7 @@ export default function Page() {
       if (newSlides > 0) {
         setCopy((prev) => {
           if (!prev || prev.family !== "photoBubble") return prev;
-          return { ...prev, slides: [...prev.slides, ...Array.from({ length: newSlides }, () => ({ bubbleText: "" }))] };
+          return { ...prev, slides: [...prev.slides, ...Array.from({ length: newSlides }, () => ({ bubbles: [{ text: "" }] }))] };
         });
       }
       setSelection((prev) => (prev ? { ...prev, slideCount: nextPhotos.length } : prev));
@@ -219,7 +219,7 @@ export default function Page() {
       const slides = prev.slides.filter((_, i) => i !== index);
       // Never drop to zero — keep one empty slide so there's still a canvas
       // to add the next photo to.
-      return { ...prev, slides: slides.length > 0 ? slides : [{ bubbleText: "" }] };
+      return { ...prev, slides: slides.length > 0 ? slides : [{ bubbles: [{ text: "" }] }] };
     });
     setSelection((prev) => (prev ? { ...prev, slideCount: Math.max(1, nextPhotos.length) } : prev));
   }

@@ -121,7 +121,15 @@ export default function CopyReviewEditor({
         copy.slides.map((slide, i) => (
           <div className="slide-editor" key={i}>
             <div className="slide-label">Slide {i + 1}</div>
-            <Field label="Bubble text" value={slide.bubbleText} onChange={(v) => update((d) => { if (d.family === "photoBubble") d.slides[i].bubbleText = v; })} multiline />
+            {slide.bubbles.map((bubble, b) => (
+              <Field
+                key={b}
+                label={slide.bubbles.length > 1 ? `Bubble ${b + 1}` : "Bubble text"}
+                value={bubble.text}
+                onChange={(v) => update((d) => { if (d.family === "photoBubble") d.slides[i].bubbles[b].text = v; })}
+                multiline
+              />
+            ))}
           </div>
         ))}
 

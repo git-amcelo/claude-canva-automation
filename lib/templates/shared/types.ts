@@ -49,12 +49,17 @@ export interface TweetCardSlide {
   bookmarks: string;
 }
 
+/** One callout bubble sitting on a photo. A slide can carry several. */
+export interface PhotoBubble {
+  text: string;
+  /** Where the user dragged it, relative to its default spot. */
+  position?: Offset;
+  /** Fill colour override; falls back to the variant's default. */
+  color?: string;
+}
+
 export interface PhotoBubbleSlide {
-  bubbleText: string;
-  /** Where the user dragged the callout bubble, relative to its default spot. */
-  bubblePosition?: Offset;
-  /** Bubble fill colour override; falls back to the variant's default. */
-  bubbleColor?: string;
+  bubbles: PhotoBubble[];
 }
 
 export interface TextPostSlide {

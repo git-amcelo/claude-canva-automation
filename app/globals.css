@@ -1597,3 +1597,57 @@ input[type="number"] {
   color: var(--ink-soft);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* Bubble controls on the photo canvas.
+   Sized in canvas px because they live inside the scaled 1080x1350 canvas. */
+
+.bubble-add {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  padding: 16px 40px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: Inter, sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.stage-canvas:hover .bubble-add {
+  opacity: 1;
+}
+
+.bubble-add:hover {
+  background: var(--accent);
+}
+
+.bubble-remove {
+  width: 52px;
+  height: 52px;
+  margin-left: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 36px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.stage-canvas:hover .bubble-remove {
+  opacity: 1;
+}
+
+.bubble-remove:hover {
+  background: var(--danger);
+}
