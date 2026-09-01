@@ -377,6 +377,23 @@ export default function Page() {
           <h1>{STEP_HEADINGS[step].title}</h1>
           <p className="subtitle">{STEP_HEADINGS[step].subtitle(contentMode)}</p>
 
+          {step > 1 && (
+            <div className="step-nav">
+              <button className="btn secondary" onClick={() => setStep(step - 1)}>
+                ← {step === 3 ? "Back to slides" : "Back"}
+              </button>
+              {step === 2 ? (
+                <button className="btn" onClick={() => setStep(3)}>
+                  Next: caption &amp; export →
+                </button>
+              ) : (
+                <button className="btn secondary" onClick={handleStartOver}>
+                  Start a new post
+                </button>
+              )}
+            </div>
+          )}
+
           {step === 1 && (
           <>
           <div className="mode-toggle" role="group" aria-label="Content source">
@@ -573,15 +590,6 @@ export default function Page() {
                 <summary>Edit as a form instead</summary>
                 <CopyReviewEditor copy={copy} onChange={handleCopyChange} />
               </details>
-
-              <div className="step-nav">
-                <button className="btn secondary" onClick={() => setStep(1)}>
-                  ← Back
-                </button>
-                <button className="btn" onClick={() => setStep(3)}>
-                  Next: caption &amp; export →
-                </button>
-              </div>
             </>
           )}
 
@@ -617,15 +625,6 @@ export default function Page() {
                 </button>
                 <button className="btn secondary" onClick={() => copyText("comment", copy.caption.firstComment)}>
                   {copiedField === "comment" ? "Copied ✓" : "Copy first comment"}
-                </button>
-              </div>
-
-              <div className="step-nav">
-                <button className="btn secondary" onClick={() => setStep(2)}>
-                  ← Back to slides
-                </button>
-                <button className="btn secondary" onClick={handleStartOver}>
-                  Start a new post
                 </button>
               </div>
             </>
