@@ -23,7 +23,9 @@ The `colorBlock` template's copy is drafted as 6 small sequential calls (one per
 2. In the Vercel project's **Settings → Environment Variables**, add:
    - `LLM_PROVIDER` = `anthropic` (Ollama won't work on Vercel — see above)
    - `ANTHROPIC_API_KEY` — from [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys). This is billed to whoever's account owns the key, based on usage — a real ongoing cost, not a one-time fee.
-3. **Turn on Deployment Protection** (Settings → Deployment Protection — requires a Vercel Pro plan). This tool calls a paid API on every "Draft copy" click; without protection, the URL is publicly usable by anyone who finds it, including running up your Anthropic bill. This is the one step that's easy to forget and matters most.
+3. **Leave Deployment Protection off** (Settings → Deployment Protection → Vercel Authentication → Disabled). It has to be off for "Send to phone" to work: your phone isn't signed in to Vercel, so with protection on, scanning the QR hits a login wall instead of the slides.
+
+   The trade-off, so it's on the record: with `LLM_PROVIDER=anthropic`, anyone who has the URL can click "Generate post" and spend money on your Anthropic key. The URL is unguessable and not linked from anywhere, so this is mainly a risk if it gets shared or leaks. If that ever becomes a concern, the options are to re-enable protection and add `/share` + `/api/share` as bypass paths (Pro plan), or put a shared password in front of the generate routes.
 4. Redeploy (or it'll deploy automatically on push once the repo is connected).
 
 **Platform constraints already handled in the code**, in case anything here ever needs revisiting:
@@ -60,10 +62,9 @@ code pointing at `/share/<id>` on this app's own domain.
   the app switches to it with no code change.
 - Links expire after `SHARE_TTL_DAYS` (7 by default). `vercel.json` runs
   `/api/share/cleanup` daily to delete expired bundles.
-- **Deployment Protection blocks this.** If it's enabled, opening the share link
-  on a phone will demand a Vercel login. Either turn protection off, or add
-  `/share` and `/api/share` to the protection bypass paths, otherwise the QR is
-  unusable on a device that isn't signed in.
+- **Deployment Protection must stay off**, otherwise opening the share link on a
+  phone demands a Vercel login and the QR is unusable. See the deploy section
+  above for the trade-off that comes with that.
 - Slides are re-encoded to JPEG (quality 92) for the share page — a 1080x1350
   PNG is several MB, which is slow on cellular, and Instagram re-encodes to
   JPEG regardless. Download ZIP still gives you the original PNGs.
