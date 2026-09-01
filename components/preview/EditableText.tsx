@@ -8,12 +8,22 @@ import type { Offset } from "@/lib/templates/shared/types";
 const noop = () => {};
 
 /**
- * A run of blank lines at the end of the content: each newline plus whatever
- * whitespace trails it. Anything this matches renders as an empty line — and
- * on a photo bubble, where every line paints its own background, as an empty
- * pill hanging under the callout.
+ * Zero-width space. Stands in for the newline the browser would otherwise park
+ * at the end of the box to hold a freshly opened line — see the swap in
+ * trimTrailingBlankLines. It occupies the line without opening another one,
+ * and never survives into the copy: it's swept up as soon as the user types,
+ * and stripped again on commit.
  */
-const TRAILING_BLANK_LINES = /(?:\n[^\S\n]*)+$/;
+const PLACEHOLDER = "\u200B";
+
+/**
+ * A run of blank lines at the end of the content: each newline plus whatever
+ * whitespace trails it, and any placeholder holding the last one open.
+ * Anything this matches renders as an empty line — and on a photo bubble,
+ * where every line paints its own background, as an empty pill hanging under
+ * the callout.
+ */
+const TRAILING_BLANK_LINES = /(?:\n[^\S\n]*|\u200B)+$/;
 
 /** A block the browser left behind for a line that has nothing on it. */
 function isBlankBlock(node: ChildNode) {
@@ -84,7 +94,7 @@ export default function EditableText({
   function commit(e: FocusEvent<HTMLDivElement>) {
     setFocused(false);
     const el = e.currentTarget;
-    const text = el.innerText.replace(TRAILING_BLANK_LINES, "");
+    const text = el.innerText.replace(/\u200B/g, "").replace(TRAILING_BLANK_LINES, "");
     lastCommitted.current = text;
 
     // Stripping the blank line from the value isn't enough on its own: the
@@ -134,6 +144,22 @@ export default function EditableText({
     const el = ref.current;
     if (!el) return;
 
+    // Sweep up placeholders that are no longer holding anything open: the only
+    // one worth keeping is a final character still standing in for the line
+    // the caret is on. Once real text follows one, its line can hold itself.
+    // (deleteData is what keeps the caret put; reassigning .data would not.)
+    const texts: Text[] = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) texts.push(walker.currentNode as Text);
+    texts.forEach((node, i) => {
+      const holdsLastLine =
+        i === texts.length - 1 && node === el.lastChild && node.data.endsWith(PLACEHOLDER);
+      const upto = holdsLastLine ? node.data.length - 1 : node.data.length;
+      for (let at = upto - 1; at >= 0; at--) {
+        if (node.data[at] === PLACEHOLDER) node.deleteData(at, 1);
+      }
+    });
+
     // Walk back over the trailing line breaks to find where the run starts.
     // It comes in every shape the browser has ever used for an empty line:
     // newlines in a text node, a <br>, or a block with nothing in it.
@@ -182,7 +208,19 @@ export default function EditableText({
         below.setStart(caret.startContainer, caret.startOffset);
         below.setEnd(el, el.childNodes.length);
         const rest = below.cloneContents();
-        if (rest.textContent?.includes("\n") || rest.querySelector("br, div, p")) return;
+        const restText = rest.textContent ?? "";
+        const restBlocks = rest.querySelector("br, div, p") !== null;
+
+        // A newline is a clumsy sentinel: holding the caret's line open opens
+        // an empty line behind it too, so one Enter shows two empty pills.
+        // Swap it for a zero-width character, which holds the line just as
+        // well and opens nothing.
+        if (restText === "\n" && !restBlocks) {
+          below.deleteContents();
+          below.insertNode(document.createTextNode(PLACEHOLDER));
+          return;
+        }
+        if (restText.includes("\n") || restText.includes(PLACEHOLDER) || restBlocks) return;
       }
     }
 
