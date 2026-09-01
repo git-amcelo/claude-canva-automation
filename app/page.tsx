@@ -45,6 +45,11 @@ const FAMILY_NAMES: Record<TemplateFamily, string> = {
   textPost: "Text post",
 };
 
+const VARIANT_CHIPS: { id: Variant; label: string }[] = [
+  { id: "branded", label: "Branded orange" },
+  { id: "neutral", label: "Neutral" },
+];
+
 const STEPS = [
   { n: 1, label: "Set up" },
   { n: 2, label: "Edit slides" },
@@ -95,7 +100,13 @@ export default function Page() {
   const canvasManagesPhotos = familyOverride === "photoBubble" && contentMode === "manual";
   const needsPhoto = familyOverride === "photoBubble" && contentMode === "ai" && photoDataUrls.length === 0;
   const needsTemplate = familyOverride === null;
-  const canStart = !needsTemplate && !needsPhoto && !generating && (contentMode === "manual" || prompt.trim().length > 0);
+  // Tweet card and text post have no natural slide count to fall back on
+  // (color-block is fixed at 5, photo+bubble follows the photos), so in the
+  // manual flow the count is an explicit choice rather than a silent default.
+  const picksSlideCount = familyOverride === "tweetCard" || familyOverride === "textPost";
+  const needsSlideCount = contentMode === "manual" && picksSlideCount && slideCountChoice === null;
+  const canStart =
+    !needsTemplate && !needsPhoto && !needsSlideCount && !generating && (contentMode === "manual" || prompt.trim().length > 0);
 
   function buildRenderInput(currentCopy: GenerateCopyResult, variant: Variant): RenderSlideInput {
     if (currentCopy.family === "colorBlock") return { family: "colorBlock", slides: currentCopy.slides };
@@ -148,7 +159,7 @@ export default function Page() {
         : familyOverride === "photoBubble"
           ? // Always at least one slide, so there's a canvas to add the first photo to.
             Math.min(Math.max(photoDataUrls.length, 1), 10)
-          : slideCountChoice ?? 3;
+          : (slideCountChoice ?? 1);
     const blank = buildBlankCopy(familyOverride, { slideCount });
     setCopy(blank);
     setSelection({ family: familyOverride, variant: variantChoice, slideCount, auto: false });
@@ -422,11 +433,13 @@ export default function Page() {
               )}
               {(familyOverride === "tweetCard" || familyOverride === "textPost") && (
                 <select
-                  className="count-select"
-                  value={slideCountChoice ?? "auto"}
-                  onChange={(e) => setSlideCountChoice(e.target.value === "auto" ? null : Number(e.target.value))}
+                  className={`count-select${needsSlideCount ? " needs-choice" : ""}`}
+                  value={slideCountChoice ?? ""}
+                  onChange={(e) => setSlideCountChoice(e.target.value === "" ? null : Number(e.target.value))}
                 >
-                  <option value="auto">{contentMode === "manual" ? "3 (default)" : "Auto"}</option>
+                  <option value="" disabled>
+                    {contentMode === "manual" ? "Choose…" : "Auto"}
+                  </option>
                   {Array.from({ length: 10 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>
                       {i + 1}
@@ -437,13 +450,24 @@ export default function Page() {
             </div>
           )}
 
-          {contentMode === "manual" && familyOverride && (familyOverride === "tweetCard" || familyOverride === "photoBubble") && (
-            <div className="variant-row">
+          {contentMode === "manual" && (familyOverride === "tweetCard" || familyOverride === "photoBubble") && (
+            <div className="chip-row" role="group" aria-label="Colors">
               <span className="chip-row-label">Colors</span>
-              <select className="count-select" value={variantChoice} onChange={(e) => setVariantChoice(e.target.value as Variant)}>
-                <option value="branded">Branded (orange)</option>
-                <option value="neutral">Neutral</option>
-              </select>
+              {VARIANT_CHIPS.map((chip) => (
+                <span className="chip-wrap" key={chip.id}>
+                  <button
+                    className={`chip-btn${variantChoice === chip.id ? " active" : ""}`}
+                    onClick={() => setVariantChoice(chip.id)}
+                  >
+                    {chip.label}
+                  </button>
+                  <span className="chip-preview" aria-hidden="true">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/api/sample/${familyOverride}?variant=${chip.id}&v=2`} alt="" loading="lazy" />
+                    <span className="chip-preview-label">{chip.label} sample</span>
+                  </span>
+                </span>
+              ))}
             </div>
           )}
 
@@ -477,6 +501,7 @@ export default function Page() {
             </button>
             {needsTemplate && (contentMode === "manual" || prompt.trim().length > 0) && <span className="hint">Pick a style above first.</span>}
             {needsPhoto && <span className="hint">Photo + bubble needs a photo first.</span>}
+            {needsSlideCount && !needsTemplate && <span className="hint">Choose how many slides first.</span>}
             {copy && !generating && (
               <button className="btn secondary small" onClick={handleStartOver}>
                 New post

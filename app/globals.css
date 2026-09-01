@@ -1589,3 +1589,11 @@ input[type="number"] {
 .stage-thumb-remove:hover {
   background: var(--danger);
 }
+
+/* Slide count is an explicit choice, so flag it until one is made. */
+
+.count-select.needs-choice {
+  border-color: var(--accent);
+  color: var(--ink-soft);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}

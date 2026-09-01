@@ -9,7 +9,7 @@ import { renderPhotoBubblePage } from "@/lib/templates/photoBubble";
 import { renderTextPostPage } from "@/lib/templates/textPost";
 import { loadIcons } from "@/lib/templates/shared/icons";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TWEET_NAME, TWEET_HANDLE } from "@/lib/templates/shared/constants";
-import type { TemplateFamily } from "@/lib/templates/shared/types";
+import type { TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -76,7 +76,7 @@ const SAMPLE_COLOR_BLOCK = {
   cta: { headline: "Ready to simplify?", body: "Start your free trial at buckstreaming.com" },
 };
 
-async function renderSample(family: TemplateFamily): Promise<Buffer> {
+async function renderSample(family: TemplateFamily, variant: Variant): Promise<Buffer> {
   if (family === "colorBlock") {
     return renderToPngBuffer(renderColorBlockPage(0, SAMPLE_COLOR_BLOCK));
   }
@@ -84,7 +84,7 @@ async function renderSample(family: TemplateFamily): Promise<Buffer> {
     const icons = await loadIcons();
     return renderToPngBuffer(
       renderTweetCardPage(
-        "branded",
+        variant,
         {
           name: TWEET_NAME,
           handle: TWEET_HANDLE,
@@ -101,7 +101,7 @@ async function renderSample(family: TemplateFamily): Promise<Buffer> {
   }
   if (family === "photoBubble") {
     const photo = await samplePhotoDataUrl();
-    return renderToPngBuffer(renderPhotoBubblePage("neutral", { bubbleText: "Your daily choices decide your results" }, photo));
+    return renderToPngBuffer(renderPhotoBubblePage(variant, { bubbleText: "Your daily choices decide your results" }, photo));
   }
   return renderToPngBuffer(
     renderTextPostPage({
@@ -112,17 +112,26 @@ async function renderSample(family: TemplateFamily): Promise<Buffer> {
 
 const FAMILIES: TemplateFamily[] = ["colorBlock", "tweetCard", "photoBubble", "textPost"];
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ family: string }> }) {
+/** Only these two read the variant; the others render the same either way. */
+const VARIANT_AWARE: TemplateFamily[] = ["tweetCard", "photoBubble"];
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ family: string }> }) {
   const { family } = await params;
   if (!FAMILIES.includes(family as TemplateFamily)) {
     return NextResponse.json({ error: "Unknown template family." }, { status: 404 });
   }
 
+  const requested = req.nextUrl.searchParams.get("variant");
+  const variant: Variant = requested === "neutral" || requested === "branded" ? requested : "branded";
+
   try {
-    let png = cache.get(family);
+    // Keyed by variant only where it changes the output, so the other two
+    // families don't render twice for nothing.
+    const key = VARIANT_AWARE.includes(family as TemplateFamily) ? `${family}:${variant}` : family;
+    let png = cache.get(key);
     if (!png) {
-      png = await renderSample(family as TemplateFamily);
-      cache.set(family, png);
+      png = await renderSample(family as TemplateFamily, variant);
+      cache.set(key, png);
     }
     return new NextResponse(new Uint8Array(png), {
       headers: {
