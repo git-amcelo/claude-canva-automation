@@ -10,7 +10,7 @@ export class PhotoUploadError extends Error {}
  * templates render. Shared by the upload panel and click-to-replace on the
  * canvas so both paths enforce the same rules.
  */
-export async function uploadPhotoFile(file: File): Promise<string> {
+export async function uploadPhotoFile(file: File, crop?: { x: number; y: number; width: number; height: number }): Promise<string> {
   const isHeic = /\.hei[cf]$/i.test(file.name) || file.type === "image/heic" || file.type === "image/heif";
   if (isHeic) {
     throw new PhotoUploadError(
@@ -26,6 +26,7 @@ export async function uploadPhotoFile(file: File): Promise<string> {
   const resized = await resizeImageForUpload(file);
   const formData = new FormData();
   formData.append("photo", resized, "photo.jpg");
+  if (crop) formData.append("crop", JSON.stringify(crop));
 
   const res = await fetch("/api/upload-photo", { method: "POST", body: formData });
   const json = await res.json();
@@ -34,11 +35,12 @@ export async function uploadPhotoFile(file: File): Promise<string> {
 }
 
 /**
- * Opens the OS file picker and resolves with the uploaded photos' data URLs
- * (empty if the user cancels). Used by the canvas's "+" tile and
+ * Opens the OS file picker and resolves with the chosen files (empty if the
+ * user cancels). Files rather than uploads, because each one goes through the
+ * crop dialog before it's sent. Used by the canvas's "+" tile and
  * click-to-replace, which have no visible file input of their own.
  */
-export function pickAndUploadPhotos(options: { multiple?: boolean } = {}): Promise<string[]> {
+export function pickPhotoFiles(options: { multiple?: boolean } = {}): Promise<File[]> {
   return new Promise((resolve, reject) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -47,20 +49,10 @@ export function pickAndUploadPhotos(options: { multiple?: boolean } = {}): Promi
     input.style.display = "none";
     document.body.appendChild(input);
 
-    input.addEventListener("change", async () => {
+    input.addEventListener("change", () => {
       const files = Array.from(input.files ?? []);
       input.remove();
-      if (files.length === 0) {
-        resolve([]);
-        return;
-      }
-      try {
-        const urls: string[] = [];
-        for (const file of files) urls.push(await uploadPhotoFile(file));
-        resolve(urls);
-      } catch (err) {
-        reject(err);
-      }
+      resolve(files);
     });
 
     // Cancelling the dialog fires no event in most browsers; this cleans up

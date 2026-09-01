@@ -7,7 +7,8 @@ import CopyReviewEditor from "@/components/CopyReviewEditor";
 import SlideStage from "@/components/preview/SlideStage";
 import { buildImageZip, downloadBlob } from "@/lib/zip";
 import { buildBlankCopy } from "@/lib/blankCopy";
-import { pickAndUploadPhotos } from "@/lib/uploadPhoto";
+import { pickPhotoFiles, uploadPhotoFile } from "@/lib/uploadPhoto";
+import PhotoCropper from "@/components/PhotoCropper";
 import type { GenerateCopyResult } from "@/lib/llm";
 import type { RenderSlideInput, TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
@@ -94,6 +95,13 @@ export default function Page() {
   const [exportingAll, setExportingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  // Photos are cropped one at a time before use: `cropQueue` holds the files
+  // still waiting, and `cropTarget` says where the finished crop should land —
+  // appended as new slides, or swapped into an existing one.
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropTarget, setCropTarget] = useState<{ mode: "append" } | { mode: "replace"; index: number } | null>(null);
+  const [cropPreview, setCropPreview] = useState<string | null>(null);
+  const [cropping, setCropping] = useState(false);
 
   // In manual mode the photo+bubble carousel is built entirely on the canvas —
   // photos are added there with the + tile, so nothing is needed up front.
@@ -166,32 +174,18 @@ export default function Page() {
     setStep(2);
   }
 
-  /** Adds photos from the canvas's + tile, each becoming a new slide. */
+  /** Adds photos from the canvas's + tile — each one is cropped first. */
   async function handleAddPhoto() {
     setError(null);
     try {
-      const urls = await pickAndUploadPhotos({ multiple: true });
-      if (urls.length === 0) return;
+      const files = await pickPhotoFiles({ multiple: true });
+      if (files.length === 0) return;
       const room = MAX_SLIDES - photoDataUrls.length;
       if (room <= 0) {
         setError(`You can use at most ${MAX_SLIDES} photos.`);
         return;
       }
-      const added = urls.slice(0, room);
-      const nextPhotos = [...photoDataUrls, ...added];
-      setPhotoDataUrls(nextPhotos);
-
-      // The first slide starts out photo-less, so it absorbs the first upload
-      // instead of adding a slide alongside it.
-      const absorbed = photoDataUrls.length === 0 ? 1 : 0;
-      const newSlides = added.length - absorbed;
-      if (newSlides > 0) {
-        setCopy((prev) => {
-          if (!prev || prev.family !== "photoBubble") return prev;
-          return { ...prev, slides: [...prev.slides, ...Array.from({ length: newSlides }, () => ({ bubbles: [{ text: "" }] }))] };
-        });
-      }
-      setSelection((prev) => (prev ? { ...prev, slideCount: nextPhotos.length } : prev));
+      startCropping(files.slice(0, room), { mode: "append" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add the photo.");
     }
@@ -201,11 +195,63 @@ export default function Page() {
   async function handleReplacePhoto(index: number) {
     setError(null);
     try {
-      const [url] = await pickAndUploadPhotos();
-      if (!url) return;
-      setPhotoDataUrls((prev) => (index < prev.length ? prev.map((p, i) => (i === index ? url : p)) : [...prev, url]));
+      const files = await pickPhotoFiles();
+      if (files.length === 0) return;
+      startCropping(files.slice(0, 1), { mode: "replace", index });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to replace the photo.");
+    }
+  }
+
+  function startCropping(files: File[], target: { mode: "append" } | { mode: "replace"; index: number }) {
+    setCropTarget(target);
+    setCropQueue(files);
+    setCropPreview(URL.createObjectURL(files[0]));
+  }
+
+  /** Moves to the next queued photo, or closes the dialog when done. */
+  function advanceCropQueue(remaining: File[]) {
+    if (cropPreview) URL.revokeObjectURL(cropPreview);
+    if (remaining.length === 0) {
+      setCropQueue([]);
+      setCropTarget(null);
+      setCropPreview(null);
+      return;
+    }
+    setCropQueue(remaining);
+    setCropPreview(URL.createObjectURL(remaining[0]));
+  }
+
+  async function handleCropConfirm(box: { x: number; y: number; width: number; height: number }) {
+    const file = cropQueue[0];
+    const target = cropTarget;
+    if (!file || !target) return;
+    setCropping(true);
+    setError(null);
+    try {
+      const dataUrl = await uploadPhotoFile(file, box);
+      if (target.mode === "replace") {
+        const index = target.index;
+        setPhotoDataUrls((prev) => (index < prev.length ? prev.map((p, i) => (i === index ? dataUrl : p)) : [...prev, dataUrl]));
+      } else {
+        const nextPhotos = [...photoDataUrls, dataUrl];
+        setPhotoDataUrls(nextPhotos);
+        // The first slide starts photo-less, so it absorbs the first upload
+        // instead of adding a slide alongside it.
+        if (photoDataUrls.length > 0) {
+          setCopy((prev) => {
+            if (!prev || prev.family !== "photoBubble") return prev;
+            return { ...prev, slides: [...prev.slides, { bubbles: [{ text: "" }] }] };
+          });
+        }
+        setSelection((prev) => (prev ? { ...prev, slideCount: nextPhotos.length } : prev));
+      }
+      advanceCropQueue(cropQueue.slice(1));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process the photo.");
+      advanceCropQueue([]);
+    } finally {
+      setCropping(false);
     }
   }
 
@@ -632,6 +678,15 @@ export default function Page() {
         </main>
 
         {error && <div className="error-banner">{error}</div>}
+
+        {cropPreview && (
+          <PhotoCropper
+            src={cropPreview}
+            busy={cropping}
+            onCancel={() => advanceCropQueue([])}
+            onConfirm={handleCropConfirm}
+          />
+        )}
       </div>
     </>
   );

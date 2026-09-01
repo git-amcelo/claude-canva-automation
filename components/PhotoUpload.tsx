@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { uploadPhotoFile } from "@/lib/uploadPhoto";
+import PhotoCropper from "./PhotoCropper";
 
 const MAX_PHOTOS = 10;
 
@@ -18,6 +19,9 @@ export default function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  // Each picked file is cropped before upload; the rest wait in the queue.
+  const [queue, setQueue] = useState<File[]>([]);
+  const [preview, setPreview] = useState<string | null>(null);
 
   function moveTo(from: number, to: number) {
     if (from === to) return;
@@ -27,21 +31,35 @@ export default function PhotoUpload({
     onChange(next);
   }
 
-  async function handleFiles(files: File[]) {
+  function handleFiles(files: File[]) {
     if (files.length === 0) return;
     const room = MAX_PHOTOS - photos.length;
     if (room <= 0) {
       onError(`You can upload at most ${MAX_PHOTOS} photos.`);
       return;
     }
+    const next = files.slice(0, room);
+    setQueue(next);
+    setPreview(URL.createObjectURL(next[0]));
+  }
 
+  function advanceQueue(remaining: File[]) {
+    if (preview) URL.revokeObjectURL(preview);
+    setQueue(remaining);
+    setPreview(remaining.length > 0 ? URL.createObjectURL(remaining[0]) : null);
+  }
+
+  async function confirmCrop(box: { x: number; y: number; width: number; height: number }) {
+    const file = queue[0];
+    if (!file) return;
     setUploading(true);
     try {
-      const uploaded: string[] = [];
-      for (const file of files.slice(0, room)) uploaded.push(await uploadPhotoFile(file));
-      if (uploaded.length > 0) onChange([...photos, ...uploaded]);
+      const dataUrl = await uploadPhotoFile(file, box);
+      onChange([...photos, dataUrl]);
+      advanceQueue(queue.slice(1));
     } catch (err) {
       onError(err instanceof Error ? err.message : "Upload failed.");
+      advanceQueue([]);
     } finally {
       setUploading(false);
     }
@@ -142,6 +160,10 @@ export default function PhotoUpload({
           <div>Click or drop photos here (JPEG/PNG/WebP) — upload several and each slide gets its own photo, in order</div>
         )}
       </div>
+
+      {preview && (
+        <PhotoCropper src={preview} busy={uploading} onCancel={() => advanceQueue([])} onConfirm={confirmCrop} />
+      )}
     </div>
   );
 }

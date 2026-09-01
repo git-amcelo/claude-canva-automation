@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cropPhotoToCanvas, UnsupportedImageError } from "@/lib/imageUtils";
+import { cropPhotoToBox, cropPhotoToCanvas, UnsupportedImageError } from "@/lib/imageUtils";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -24,6 +24,14 @@ export async function POST(req: NextRequest) {
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
+    // A "crop" field means the user picked the box themselves; without one we
+    // fall back to the automatic subject-aware crop.
+    const rawCrop = formData.get("crop");
+    if (typeof rawCrop === "string" && rawCrop.length > 0) {
+      const box = JSON.parse(rawCrop);
+      const dataUrl = await cropPhotoToBox(buffer, file.type, box);
+      return NextResponse.json({ photoDataUrl: dataUrl });
+    }
     const dataUrl = await cropPhotoToCanvas(buffer, file.type);
     return NextResponse.json({ photoDataUrl: dataUrl });
   } catch (err) {
