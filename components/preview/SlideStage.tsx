@@ -36,6 +36,7 @@ export default function SlideStage({
   onAddPhoto,
   onReplacePhoto,
   onReorderSlides,
+  onDeleteSlide,
 }: {
   copy: GenerateCopyResult;
   onChange: (next: GenerateCopyResult) => void;
@@ -46,6 +47,7 @@ export default function SlideStage({
   onAddPhoto: () => void;
   onReplacePhoto: (index: number) => void;
   onReorderSlides: (from: number, to: number) => void;
+  onDeleteSlide: (index: number) => void;
 }) {
   const count = pageCountFor(copy);
   const [active, setActive] = useState(0);
@@ -54,6 +56,9 @@ export default function SlideStage({
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const clampedActive = Math.min(active, Math.max(0, count - 1));
   const isPhotoBubble = copy.family === "photoBubble";
+  // Color-block is a fixed 5-slide story, so its slides can't be removed;
+  // photo+bubble is the family you build up (and tear down) slide by slide.
+  const canDeleteSlides = isPhotoBubble;
 
   // If the slide count shrinks (a photo was removed) keep the active index in range.
   useEffect(() => {
@@ -155,8 +160,11 @@ export default function SlideStage({
 
       <div className="stage-rail">
         {Array.from({ length: count }, (_, i) => (
+          // The remove button is a sibling of the thumb, not a child: the
+          // thumb is itself a <button>, and nesting one inside it is invalid
+          // HTML (React reports it as a hydration error).
+          <div className="stage-thumb-wrap" key={i}>
           <button
-            key={i}
             className={`stage-thumb${i === clampedActive ? " active" : ""}${dragIndex === i ? " dragging" : ""}${
               overIndex === i && dragIndex !== null && dragIndex !== i ? " drop-target" : ""
             }`}
@@ -192,6 +200,18 @@ export default function SlideStage({
             <ScaledCanvas interactive={false}>{renderEditablePage(copy, i, variant, photoDataUrls, interactions)}</ScaledCanvas>
             <span className="idx">{i + 1}</span>
           </button>
+          {canDeleteSlides && (
+            <button
+              type="button"
+              className="stage-thumb-remove"
+              aria-label={`Delete slide ${i + 1}`}
+              title="Delete this slide"
+              onClick={() => onDeleteSlide(i)}
+            >
+              ×
+            </button>
+          )}
+          </div>
         ))}
 
         {isPhotoBubble && count < 10 && (

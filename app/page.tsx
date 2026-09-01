@@ -198,6 +198,21 @@ export default function Page() {
     }
   }
 
+  /** Removes a slide and its photo together. */
+  function handleDeleteSlide(index: number) {
+    setError(null);
+    const nextPhotos = photoDataUrls.filter((_, i) => i !== index);
+    setPhotoDataUrls(nextPhotos);
+    setCopy((prev) => {
+      if (!prev || prev.family !== "photoBubble") return prev;
+      const slides = prev.slides.filter((_, i) => i !== index);
+      // Never drop to zero — keep one empty slide so there's still a canvas
+      // to add the next photo to.
+      return { ...prev, slides: slides.length > 0 ? slides : [{ bubbleText: "" }] };
+    });
+    setSelection((prev) => (prev ? { ...prev, slideCount: Math.max(1, nextPhotos.length) } : prev));
+  }
+
   /** Reorders a slide and its photo together, so bubble text stays with its image. */
   function handleReorderSlides(from: number, to: number) {
     setPhotoDataUrls((prev) => moveItem(prev, from, to));
@@ -500,6 +515,7 @@ export default function Page() {
                 onAddPhoto={handleAddPhoto}
                 onReplacePhoto={handleReplacePhoto}
                 onReorderSlides={handleReorderSlides}
+                onDeleteSlide={handleDeleteSlide}
               />
 
               {contentMode === "ai" && (
