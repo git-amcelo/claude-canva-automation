@@ -10,15 +10,21 @@ export default function PhotoUpload({
   photos,
   onChange,
   onError,
+  captions,
+  onCaptionsChange,
 }: {
   photos: string[];
   onChange: (photos: string[]) => void;
   onError: (message: string) => void;
+  /** Optional per-photo content field (one caption per photo, same order) — pass alongside onCaptionsChange to show it. */
+  captions?: string[];
+  onCaptionsChange?: (captions: string[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const showCaptions = !!captions && !!onCaptionsChange;
 
   function moveTo(from: number, to: number) {
     if (from === to) return;
@@ -26,6 +32,13 @@ export default function PhotoUpload({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     onChange(next);
+
+    if (showCaptions) {
+      const nextCaptions = [...captions!];
+      const [movedCaption] = nextCaptions.splice(from, 1);
+      nextCaptions.splice(to, 0, movedCaption);
+      onCaptionsChange!(nextCaptions);
+    }
   }
 
   async function uploadOne(file: File): Promise<string | null> {
@@ -67,7 +80,10 @@ export default function PhotoUpload({
         const dataUrl = await uploadOne(file);
         if (dataUrl) uploaded.push(dataUrl);
       }
-      if (uploaded.length > 0) onChange([...photos, ...uploaded]);
+      if (uploaded.length > 0) {
+        onChange([...photos, ...uploaded]);
+        if (showCaptions) onCaptionsChange!([...captions!, ...uploaded.map(() => "")]);
+      }
     } catch (err) {
       onError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -77,6 +93,7 @@ export default function PhotoUpload({
 
   function removePhoto(index: number) {
     onChange(photos.filter((_, i) => i !== index));
+    if (showCaptions) onCaptionsChange!(captions!.filter((_, i) => i !== index));
   }
 
   return (
@@ -86,7 +103,7 @@ export default function PhotoUpload({
           <div className="photo-thumbs">
             {photos.map((dataUrl, i) => (
               <div
-                className={`photo-thumb${dragIndex === i ? " dragging" : ""}${
+                className={`photo-thumb${showCaptions ? " has-caption" : ""}${dragIndex === i ? " dragging" : ""}${
                   overIndex === i && dragIndex !== null && dragIndex !== i ? " drop-target" : ""
                 }`}
                 key={i}
@@ -131,6 +148,19 @@ export default function PhotoUpload({
                 >
                   ×
                 </button>
+                {showCaptions && (
+                  <textarea
+                    className="photo-thumb-caption"
+                    placeholder="Callout text for this photo…"
+                    value={captions![i] ?? ""}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const next = [...captions!];
+                      next[i] = e.target.value;
+                      onCaptionsChange!(next);
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>

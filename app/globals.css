@@ -1172,3 +1172,206 @@ input[type="number"] {
     font-size: 26px;
   }
 }
+
+/* Fonts for the live slide canvas (browser) — same files the server renders with. */
+
+@font-face {
+  font-family: "Archivo Black";
+  src: url("/fonts/ArchivoBlack-Regular.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Content mode toggle (Write with AI / I have the content) */
+
+.mode-toggle {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  gap: 2px;
+  margin-bottom: 18px;
+}
+
+.mode-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.mode-toggle button.active {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.variant-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Editable on-slide text (click straight on the slide, like PPT) */
+
+.editable-text {
+  outline: none;
+  cursor: text;
+  border-radius: 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: box-shadow 0.12s, background-color 0.12s;
+}
+
+.editable-text:hover {
+  box-shadow: 0 0 0 6px rgba(128, 128, 128, 0.16);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+.editable-text:focus {
+  box-shadow: 0 0 0 6px rgba(46, 124, 246, 0.16), 0 0 0 2px #2e7cf6;
+  background: rgba(46, 124, 246, 0.1);
+}
+
+.editable-text:empty:before {
+  content: attr(data-placeholder);
+  opacity: 0.5;
+}
+
+/* Slide stage: one big editable slide + a thumbnail rail, like a slide-deck editor */
+
+.stage {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.stage-main {
+  flex: 2 1 380px;
+  min-width: 280px;
+}
+
+.stage-canvas {
+  border-radius: var(--radius-card);
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+}
+
+.stage-main-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.stage-main-footer .idx {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-weight: 700;
+}
+
+.stage-rail {
+  flex: 1 1 140px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+  max-height: 640px;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+
+.stage-thumb {
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.stage-thumb.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.stage-thumb .idx {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.stage-hint {
+  width: 100%;
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-top: 14px;
+}
+
+/* Per-photo caption (photo + bubble, "I have the content" mode) */
+
+.photo-thumb.has-caption {
+  display: flex;
+  flex-direction: column;
+}
+
+.photo-thumb-caption {
+  width: 100%;
+  border: none;
+  border-top: 1.5px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-family: inherit;
+  padding: 6px 8px;
+  resize: none;
+  min-height: 44px;
+}
+
+.photo-thumb-caption:focus {
+  outline: none;
+  background: var(--accent-soft);
+}

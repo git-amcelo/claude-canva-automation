@@ -28,13 +28,9 @@ function Field({
 export default function CopyReviewEditor({
   copy,
   onChange,
-  onRender,
-  rendering,
 }: {
   copy: GenerateCopyResult;
   onChange: (next: GenerateCopyResult) => void;
-  onRender: () => void;
-  rendering: boolean;
 }) {
   function update(path: (draft: GenerateCopyResult) => void) {
     const next = structuredClone(copy);
@@ -142,16 +138,6 @@ export default function CopyReviewEditor({
         <Field label="Caption" value={copy.caption.caption} onChange={(v) => update((d) => { d.caption.caption = v; })} multiline />
         <Field label="First comment (link goes here)" value={copy.caption.firstComment} onChange={(v) => update((d) => { d.caption.firstComment = v; })} multiline />
       </div>
-
-      <button className="btn" onClick={onRender} disabled={rendering}>
-        {rendering ? (
-          <>
-            <span className="spinner" /> Rendering images…
-          </>
-        ) : (
-          "Render images"
-        )}
-      </button>
     </div>
   );
 }
