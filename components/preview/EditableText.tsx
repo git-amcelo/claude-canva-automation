@@ -70,17 +70,21 @@ export default function EditableText({
     const text = el.innerText.replace(/\n+$/, "");
     lastCommitted.current = text;
 
-    // Pressing Enter leaves a trailing <br> behind so the new line stays
-    // focusable. Stripping it from the value isn't enough on its own: the
-    // sync effect below skips a DOM write when the value is unchanged, so the
-    // empty line would survive — and on the photo bubble, where each line
-    // paints its own background, it shows up as a stray empty pill.
+    // Stripping the blank line from the value isn't enough on its own: the
+    // sync effect above skips a DOM write when the value is unchanged, so the
+    // empty line would survive in the box the user just left.
     if (el.innerText !== text) el.innerText = text;
 
     if (text !== value) onChange(text);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    // Clear a stranded blank line before the key lands. The browser parks the
+    // caret in FRONT of a lone trailing newline, so Backspace finds nothing to
+    // delete, fires no input event, and the empty line — an undeletable pill on
+    // a photo bubble — is stuck there until the box loses focus.
+    if (!e.nativeEvent.isComposing) trimTrailingBlankLines();
+
     if (e.key === "Escape") {
       e.currentTarget.blur();
       return;
@@ -91,25 +95,74 @@ export default function EditableText({
       e.currentTarget.blur();
       return;
     }
-    // Multi-line: let the browser handle Enter natively. It inserts a <br>,
-    // which is correct inside a block box, and innerText turns it back into a
-    // "\n" when we commit. (See the display override below for why the box is
-    // block rather than flex.)
+    // Multi-line: let the browser handle Enter natively. In a pre-wrap box it
+    // writes plain "\n" characters, which innerText hands straight back to us
+    // when we commit — trimTrailingBlankLines below tidies up after it.
   }
 
-  // For inline-display elements (photo bubbles), strip any trailing <br>
-  // immediately on input so the background fill doesn't paint an empty line
-  // at the bottom of the bubble. The commit() handler also strips trailing
-  // newlines on blur, but this keeps the preview clean while typing.
-  const isInlineDisplay = style?.display && style.display !== "flex";
-
-  function handleInput() {
+  /**
+   * Blink parks a blank line at the end of a `white-space: pre-wrap` box:
+   * Enter writes "\n\n" — one newline for the line you opened, one more so
+   * that line has somewhere to hold the caret — and the second one stays put
+   * once you type on the line. The photo bubble paints a background per line,
+   * so the leftover hangs under the callout as an empty pill; elsewhere it
+   * just pads the box with a phantom line.
+   *
+   * So after every edit, drop the trailing run of line breaks — unless the
+   * caret is sitting inside it, which means Enter was the last thing typed and
+   * those newlines are the only thing keeping the new line, and the caret on
+   * it, alive.
+   */
+  function trimTrailingBlankLines() {
     const el = ref.current;
-    if (!el || !isInlineDisplay) return;
-    // Remove trailing <br> elements that contentEditable inserts after Enter.
-    while (el.lastChild && (el.lastChild as Element).tagName === "BR") {
-      el.removeChild(el.lastChild);
+    if (!el) return;
+
+    // Walk back over the trailing line breaks to find where the run starts.
+    let start: ChildNode | null = null;
+    let startOffset = -1; // -1 means the whole node (a <br>)
+    for (let node: ChildNode | null = el.lastChild; node; node = node.previousSibling) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const match = /\n+$/.exec((node as Text).data);
+        if (!match) break;
+        start = node;
+        startOffset = match.index;
+        if (match.index > 0) break; // run starts inside this node
+      } else if (node.nodeName === "BR") {
+        start = node;
+        startOffset = -1;
+      } else {
+        break;
+      }
     }
+    if (!start) return;
+
+    const runStart = document.createRange();
+    if (startOffset < 0) runStart.setStartBefore(start);
+    else runStart.setStart(start, startOffset);
+    runStart.collapse(true);
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount && selection.isCollapsed) {
+      const caret = selection.getRangeAt(0);
+      const inThisBox = caret.startContainer === el || el.contains(caret.startContainer);
+      if (inThisBox && caret.compareBoundaryPoints(Range.START_TO_START, runStart) > 0) {
+        // The caret is down in the run — but only leave the run alone if a
+        // break still follows it. That last break is the sentinel holding the
+        // caret's line open; with nothing below, the browser has already
+        // shunted the caret back up to the text and the blank line is the
+        // stranded one Backspace can't reach.
+        const below = document.createRange();
+        below.setStart(caret.startContainer, caret.startOffset);
+        below.setEnd(el, el.childNodes.length);
+        const rest = below.cloneContents();
+        if (rest.textContent?.includes("\n") || rest.querySelector("br")) return;
+      }
+    }
+
+    const trailing = document.createRange();
+    trailing.setStart(runStart.startContainer, runStart.startOffset);
+    trailing.setEnd(el, el.childNodes.length);
+    trailing.deleteContents();
   }
 
   const cursor = draggable ? (drag.dragging ? "grabbing" : focused ? "text" : "grab") : undefined;
@@ -127,7 +180,7 @@ export default function EditableText({
   const { justifyContent, ...restStyle } = style ?? {};
   // A caller can opt out — the photo bubble asks for `display: inline` so its
   // background follows each line's width instead of boxing the whole block.
-  // Inline handles Enter's <br> natively, so it needs no flex treatment.
+  // An inline box already stacks its own lines, so it needs no flex treatment.
   const layoutStyle: CSSProperties =
     style?.display && style.display !== "flex"
       ? { ...style }
@@ -153,7 +206,7 @@ export default function EditableText({
       onFocus={() => setFocused(true)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
-      onInput={handleInput}
+      onInput={trimTrailingBlankLines}
       onPointerDown={draggable ? drag.onPointerDown : undefined}
     />
   );
