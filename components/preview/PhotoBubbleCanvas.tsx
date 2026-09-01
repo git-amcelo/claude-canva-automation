@@ -86,11 +86,17 @@ function EditableBubble({
               lineHeight: 1.45,
               // Inline so the fill follows each line's width, not the block's.
               display: "inline",
-              background: fill,
               borderRadius: 18,
-              padding: "10px 26px",
-              boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
-              minWidth: 200,
+              // Only show the coloured pill when there's actual text — otherwise
+              // the padding/minWidth render a visible empty red box.
+              ...(bubble.text
+                ? {
+                    background: fill,
+                    padding: "10px 26px",
+                    boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+                    minWidth: 200,
+                  }
+                : {}),
             }}
           />
         </div>
