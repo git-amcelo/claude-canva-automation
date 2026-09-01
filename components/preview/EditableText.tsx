@@ -101,7 +101,7 @@ export default function EditableText({
       onFocus={() => setFocused(true)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
-      onMouseDown={draggable ? drag.onMouseDown : undefined}
+      onPointerDown={draggable ? drag.onPointerDown : undefined}
     />
   );
 }

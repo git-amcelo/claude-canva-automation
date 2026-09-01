@@ -10,7 +10,8 @@ const DRAG_THRESHOLD = 4;
 const ORIGIN: Offset = { x: 0, y: 0 };
 
 /**
- * Drag-to-reposition for a canvas element.
+ * Drag-to-reposition for a canvas element. Pointer events, so mouse, touch
+ * and pen all work the same way.
  *
  * The click/drag ambiguity matters here: these elements are also editable
  * text, so a press must be able to mean either "put my cursor here" or "move
@@ -19,7 +20,7 @@ const ORIGIN: Offset = { x: 0, y: 0 };
  * untouched; past it we take over and suppress text selection for the rest
  * of the gesture.
  *
- * Movement is divided by the canvas scale so the element tracks the cursor
+ * Movement is divided by the canvas scale so the element tracks the pointer
  * 1:1 no matter how zoomed-out the canvas is being displayed.
  */
 export function useDrag(position: Offset | undefined, onChange: (next: Offset) => void) {
@@ -28,13 +29,23 @@ export function useDrag(position: Offset | undefined, onChange: (next: Offset) =
   const [live, setLive] = useState<Offset | null>(null);
   const [dragging, setDragging] = useState(false);
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0) return;
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      // Primary button / single touch only — right-click and multi-touch
+      // gestures (pinch-zoom) are left to the browser.
+      if (e.button !== 0 || !e.isPrimary) return;
       const from = position ?? ORIGIN;
+      const pointerId = e.pointerId;
       gesture.current = { startX: e.clientX, startY: e.clientY, from, dragging: false };
 
-      const move = (ev: MouseEvent) => {
+      const cleanup = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancel);
+      };
+
+      function move(ev: PointerEvent) {
+        if (ev.pointerId !== pointerId) return;
         const g = gesture.current;
         if (!g) return;
         const dx = ev.clientX - g.startX;
@@ -46,23 +57,34 @@ export function useDrag(position: Offset | undefined, onChange: (next: Offset) =
         }
         ev.preventDefault(); // stop the press turning into a text selection
         setLive({ x: Math.round(g.from.x + dx / scale), y: Math.round(g.from.y + dy / scale) });
-      };
+      }
 
-      const up = (ev: MouseEvent) => {
-        window.removeEventListener("mousemove", move);
-        window.removeEventListener("mouseup", up);
+      function up(ev: PointerEvent) {
+        if (ev.pointerId !== pointerId) return;
+        cleanup();
         const g = gesture.current;
         gesture.current = null;
-        if (!g?.dragging) return; // a plain click — leave it to the text editor
+        if (!g?.dragging) return; // a plain click/tap — leave it to the text editor
         const dx = ev.clientX - g.startX;
         const dy = ev.clientY - g.startY;
         onChange({ x: Math.round(g.from.x + dx / scale), y: Math.round(g.from.y + dy / scale) });
         setLive(null);
         setDragging(false);
-      };
+      }
 
-      window.addEventListener("mousemove", move);
-      window.addEventListener("mouseup", up);
+      // A cancelled gesture (browser took over, e.g. a system gesture) should
+      // put the element back rather than leave it half-dragged.
+      function cancel(ev: PointerEvent) {
+        if (ev.pointerId !== pointerId) return;
+        cleanup();
+        gesture.current = null;
+        setLive(null);
+        setDragging(false);
+      }
+
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", cancel);
     },
     [position, scale, onChange]
   );
@@ -73,7 +95,7 @@ export function useDrag(position: Offset | undefined, onChange: (next: Offset) =
   return {
     /** Apply this to the element's style. */
     transform: moved ? `translate(${current.x}px, ${current.y}px)` : undefined,
-    onMouseDown,
+    onPointerDown,
     dragging,
   };
 }

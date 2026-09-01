@@ -1294,7 +1294,12 @@ input[type="number"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-top: 10px;
+}
+
+.stage-main-footer .idx {
+  margin-right: auto;
 }
 
 .stage-main-footer .idx {
@@ -1353,6 +1358,13 @@ input[type="number"] {
 }
 
 /* Dragging elements around the canvas */
+
+/* Draggable elements claim the gesture so a touch-drag moves the element
+   instead of scrolling the page. Non-draggable text is unaffected, so the
+   page still scrolls normally everywhere else. */
+.editable-text.draggable {
+  touch-action: none;
+}
 
 .editable-text.is-dragging {
   box-shadow: 0 0 0 6px rgba(46, 124, 246, 0.22), 0 0 0 2px #2e7cf6;

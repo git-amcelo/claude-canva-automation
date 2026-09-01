@@ -80,7 +80,7 @@ function PhotoBubblePageEditable({
 
       <div style={{ display: "flex", position: "absolute", left: 0, top: 210, width: CANVAS_WIDTH, justifyContent: "center", padding: "0 70px" }}>
         <div
-          onMouseDown={drag.onMouseDown}
+          onPointerDown={drag.onPointerDown}
           onDoubleClick={(e) => onBubbleClick(e, index)}
           title="Drag to move · double-click to recolour"
           style={{
@@ -91,6 +91,7 @@ function PhotoBubblePageEditable({
             padding: "26px 48px",
             boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
             cursor: drag.dragging ? "grabbing" : "grab",
+            touchAction: "none",
             ...(drag.transform ? { transform: drag.transform } : {}),
           }}
         >

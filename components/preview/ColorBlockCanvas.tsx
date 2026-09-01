@@ -41,7 +41,7 @@ function HookPageEditable({ data, wiring }: { data: ColorBlockSlides["hook"]; wi
   const { patch } = wiring;
   return (
     <div
-      onMouseDown={wiring.onBackgroundClick}
+      onPointerDown={wiring.onBackgroundClick}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -107,7 +107,7 @@ function ItemListPageEditable({
   const { patch } = wiring;
   return (
     <div
-      onMouseDown={wiring.onBackgroundClick}
+      onPointerDown={wiring.onBackgroundClick}
       style={{ display: "flex", flexDirection: "column", width: CANVAS_WIDTH, height: CANVAS_HEIGHT, background: wiring.bg, padding: "80px 64px" }}
     >
       <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>{eyebrow(BRAND.orange)}</div>
@@ -151,7 +151,7 @@ function FeaturesPageEditable({ data, wiring }: { data: ColorBlockSlides["featur
   const { patch } = wiring;
   return (
     <div
-      onMouseDown={wiring.onBackgroundClick}
+      onPointerDown={wiring.onBackgroundClick}
       style={{ display: "flex", flexDirection: "column", width: CANVAS_WIDTH, height: CANVAS_HEIGHT, background: wiring.bg, padding: "80px 70px" }}
     >
       <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>{eyebrow(BRAND.orange)}</div>
@@ -192,7 +192,7 @@ function CtaPageEditable({ data, wiring }: { data: ColorBlockSlides["cta"]; wiri
   const { patch } = wiring;
   return (
     <div
-      onMouseDown={wiring.onBackgroundClick}
+      onPointerDown={wiring.onBackgroundClick}
       style={{ display: "flex", flexDirection: "column", width: CANVAS_WIDTH, height: CANVAS_HEIGHT, background: wiring.bg, padding: "90px 70px" }}
     >
       <div style={{ display: "flex", fontFamily: "Archivo Black", fontSize: 64, color: BRAND.white, marginBottom: 40 }}>BUCK</div>

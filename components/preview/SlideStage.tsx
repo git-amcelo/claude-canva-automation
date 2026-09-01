@@ -12,6 +12,9 @@ type PickerTarget =
   | { kind: "background"; index: number; x: number; y: number }
   | { kind: "bubble"; index: number; x: number; y: number };
 
+/** Position keys are prefixed by section, in page order. */
+const COLOR_BLOCK_SECTIONS = ["hook", "problem", "fix", "features", "cta"] as const;
+
 /**
  * The live, click-to-edit slide canvas — a big editable "stage" for the
  * active slide plus a thumbnail rail to move between slides, like a
@@ -79,6 +82,35 @@ export default function SlideStage({
     });
   }
 
+  /** Has anything on this slide been dragged out of its template position? */
+  const slideHasMovedElements = (() => {
+    if (copy.family === "colorBlock") {
+      const prefix = COLOR_BLOCK_SECTIONS[clampedActive];
+      return Object.entries(copy.slides.positions ?? {}).some(
+        ([key, offset]) => key.startsWith(`${prefix}.`) && (offset.x !== 0 || offset.y !== 0)
+      );
+    }
+    if (copy.family === "photoBubble") {
+      const offset = copy.slides[clampedActive]?.bubblePosition;
+      return !!offset && (offset.x !== 0 || offset.y !== 0);
+    }
+    return false;
+  })();
+
+  /** Puts this slide's elements back where the template had them. */
+  function resetLayout() {
+    patch((d) => {
+      if (d.family === "colorBlock") {
+        const prefix = COLOR_BLOCK_SECTIONS[clampedActive];
+        const kept = Object.fromEntries(Object.entries(d.slides.positions ?? {}).filter(([key]) => !key.startsWith(`${prefix}.`)));
+        d.slides.positions = Object.keys(kept).length > 0 ? kept : undefined;
+      } else if (d.family === "photoBubble") {
+        const { bubblePosition: _dropped, ...rest } = d.slides[clampedActive];
+        d.slides[clampedActive] = rest;
+      }
+    });
+  }
+
   const interactions = {
     patch,
     onBackgroundClick: (e: React.MouseEvent, pageIndex: number) =>
@@ -104,6 +136,11 @@ export default function SlideStage({
           <span className="idx">
             Slide {clampedActive + 1} of {count}
           </span>
+          {slideHasMovedElements && (
+            <button className="btn secondary small" onClick={resetLayout} title="Put this slide's elements back where the template had them">
+              Reset layout
+            </button>
+          )}
           <button className="btn secondary small" onClick={() => onExportOne(clampedActive)} disabled={exportingIndex === clampedActive}>
             {exportingIndex === clampedActive ? (
               <>
