@@ -1303,6 +1303,14 @@ input[type="number"] {
   opacity: 0.5;
 }
 
+/* Browsers insert a sentinel <br> at the end of contentEditable elements.
+   With display:inline + box-decoration-break:clone, this <br> creates a
+   visible empty line that paints its own background pill — the "extra space"
+   at the bottom of photo-bubble callouts. Hiding it prevents the artefact. */
+.editable-text > br:last-child {
+  display: none;
+}
+
 /* Slide stage: one big editable slide + a thumbnail rail, like a slide-deck editor */
 
 .stage {
