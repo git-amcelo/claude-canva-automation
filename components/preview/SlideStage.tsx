@@ -256,11 +256,6 @@ export default function SlideStage({
         )}
       </div>
 
-      <p className="stage-hint">
-        Click any text to edit it, drag it to move it.
-        {copy.family === "colorBlock" && " Click the slide background to change its colour."}
-        {isPhotoBubble && " Click the photo to replace it, double-click the bubble to recolour it, and drag thumbnails to reorder."}
-      </p>
 
       {picker && (
         <div className="color-picker-anchor" style={{ left: picker.x, top: picker.y }}>

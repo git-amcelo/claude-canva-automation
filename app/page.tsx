@@ -667,32 +667,6 @@ export default function Page() {
                 onDeleteSlide={handleDeleteSlide}
               />
 
-              {contentMode === "ai" && (
-                <div className="edit-bar">
-                  <div className="textarea-wrap" style={{ flex: 1 }}>
-                    <input
-                      type="text"
-                      placeholder='Tweak it in plain English — e.g. "make slide 3 punchier" or "change the CTA"'
-                      value={editInstruction}
-                      onChange={(e) => setEditInstruction(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleApplyEdit();
-                      }}
-                      disabled={editing}
-                    />
-                  </div>
-                  <button className="btn" onClick={handleApplyEdit} disabled={!editInstruction.trim() || editing}>
-                    {editing ? (
-                      <>
-                        <span className="spinner" /> Applying…
-                      </>
-                    ) : (
-                      "Apply"
-                    )}
-                  </button>
-                </div>
-              )}
-
               <details className="manual-edit">
                 <summary>Edit as a form instead — including the caption</summary>
                 <CopyReviewEditor copy={copy} onChange={handleCopyChange} />
