@@ -1991,3 +1991,56 @@ body {
     padding-bottom: max(48px, env(safe-area-inset-bottom));
   }
 }
+
+/* Style chips on touch devices.
+
+   iOS treats the first tap on an element with :hover styles as a hover and
+   swallows the click, so picking a style took two taps and felt broken. The
+   popup is disabled entirely where there's no pointer; the selected style is
+   previewed inline underneath instead, which suits a narrow screen better
+   anyway. */
+@media (hover: none), (max-width: 620px) {
+  .chip-preview {
+    display: none !important;
+  }
+}
+
+.selected-preview {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+
+.selected-preview img {
+  width: 64px;
+  aspect-ratio: 1080 / 1350;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  flex: none;
+  background: var(--panel);
+}
+
+.selected-preview-text {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.selected-preview-text strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
+@media (hover: none), (max-width: 620px) {
+  .selected-preview {
+    display: flex;
+  }
+}

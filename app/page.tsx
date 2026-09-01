@@ -509,6 +509,19 @@ export default function Page() {
             ))}
           </div>
 
+          {/* Touch devices don't get the hover popup, so the chosen style is
+              shown here instead. */}
+          {familyOverride && (
+            <div className="selected-preview">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/sample/${familyOverride}?variant=${variantChoice}&v=2`} alt="" loading="lazy" />
+              <span className="selected-preview-text">
+                <strong>{FAMILY_NAMES[familyOverride]}</strong>
+                This is how your slides will look.
+              </span>
+            </div>
+          )}
+
           {familyOverride && (
             <div className="count-row">
               <span className="chip-row-label">Slides</span>
