@@ -56,7 +56,7 @@ const VARIANT_CHIPS: { id: Variant; label: string }[] = [
 const STEPS = [
   { n: 1, label: "Set up" },
   { n: 2, label: "Edit slides" },
-  { n: 3, label: "Caption & export" },
+  { n: 3, label: "Export" },
 ] as const;
 
 const STEP_HEADINGS: Record<number, { title: string; subtitle: (mode: ContentMode) => string }> = {
@@ -72,9 +72,9 @@ const STEP_HEADINGS: Record<number, { title: string; subtitle: (mode: ContentMod
     subtitle: () => "Click any text to rewrite it, drag it to move it, and recolour backgrounds or bubbles as you go.",
   },
   3: {
-    title: "Caption, then export.",
+    title: "Export your carousel.",
     subtitle: () =>
-      "The link goes in the first comment, not the caption — Instagram captions can't have clickable links. Then download and post it yourself.",
+      "Download the slides, or send them to your phone to post from the Instagram app. Copy the caption and first comment here — the link belongs in the first comment, since Instagram captions can't have clickable links.",
   },
 };
 
@@ -454,7 +454,7 @@ export default function Page() {
               </button>
               {step === 2 ? (
                 <button className="btn" onClick={() => setStep(3)}>
-                  Next: caption &amp; export →
+                  Next: export →
                 </button>
               ) : (
                 <button className="btn secondary" onClick={handleStartOver}>
@@ -670,7 +670,7 @@ export default function Page() {
               )}
 
               <details className="manual-edit">
-                <summary>Edit as a form instead</summary>
+                <summary>Edit as a form instead — including the caption</summary>
                 <CopyReviewEditor copy={copy} onChange={handleCopyChange} />
               </details>
             </>
@@ -678,21 +678,6 @@ export default function Page() {
 
           {step === 3 && copy && (
             <>
-              <label className="field-label">
-                Caption
-                <textarea
-                  value={copy.caption.caption}
-                  onChange={(e) => handleCopyChange({ ...copy, caption: { ...copy.caption, caption: e.target.value } })}
-                />
-              </label>
-              <label className="field-label">
-                First comment (paste after posting — the link goes here)
-                <textarea
-                  value={copy.caption.firstComment}
-                  onChange={(e) => handleCopyChange({ ...copy, caption: { ...copy.caption, firstComment: e.target.value } })}
-                />
-              </label>
-
               <div className="export-row">
                 <button className="btn" onClick={handleDownloadAll} disabled={exportingAll}>
                   {exportingAll ? (
