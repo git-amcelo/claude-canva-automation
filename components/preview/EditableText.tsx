@@ -97,6 +97,21 @@ export default function EditableText({
     // block rather than flex.)
   }
 
+  // For inline-display elements (photo bubbles), strip any trailing <br>
+  // immediately on input so the background fill doesn't paint an empty line
+  // at the bottom of the bubble. The commit() handler also strips trailing
+  // newlines on blur, but this keeps the preview clean while typing.
+  const isInlineDisplay = style?.display && style.display !== "flex";
+
+  function handleInput() {
+    const el = ref.current;
+    if (!el || !isInlineDisplay) return;
+    // Remove trailing <br> elements that contentEditable inserts after Enter.
+    while (el.lastChild && (el.lastChild as Element).tagName === "BR") {
+      el.removeChild(el.lastChild);
+    }
+  }
+
   const cursor = draggable ? (drag.dragging ? "grabbing" : focused ? "text" : "grab") : undefined;
 
   // The templates make every text box a flex ROW, because Satori requires a
@@ -138,6 +153,7 @@ export default function EditableText({
       onFocus={() => setFocused(true)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
+      onInput={handleInput}
       onPointerDown={draggable ? drag.onPointerDown : undefined}
     />
   );
