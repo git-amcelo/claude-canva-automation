@@ -45,7 +45,28 @@ The `colorBlock` template's copy is drafted as 6 small sequential calls (one per
 2. **Describe the post** — a sentence or two about what it's about. For the photo template, upload a photo (JPEG/PNG/WebP — not HEIC; if it's an iPhone photo, share/export it as JPEG first).
 3. **Review the drafted copy** — everything Claude writes is editable before you render images, so fix anything off before spending a render.
 4. **Preview the slides** — each slide can be regenerated individually if you edit its text and want a fresh image without re-rendering everything else.
-5. **Download & post manually** — download all slides as a zip, copy the caption and the first-comment text (the link goes in the first comment, not the caption, since Instagram captions can't have clickable links), and post it yourself in the Instagram app.
+5. **Send it to your phone** — click "Send to phone" for a QR code. Scan it, save all the slides to your camera roll in one tap, and copy the caption. Then post from the Instagram app, where you can use its own Drafts to review before publishing. Nothing is ever posted automatically.
+6. **Download & post manually** — download all slides as a zip, copy the caption and the first-comment text (the link goes in the first comment, not the caption, since Instagram captions can't have clickable links), and post it yourself in the Instagram app.
+
+## Send to phone
+
+The "Send to phone" button renders the carousel, stores it, and gives you a QR
+code pointing at `/share/<id>` on this app's own domain.
+
+- **Locally** nothing needs configuring: bundles are written to `.share/`
+  (git-ignored) and served back by the app.
+- **On Vercel** the filesystem is read-only, so create a Blob store under
+  Storage in the dashboard. That sets `BLOB_READ_WRITE_TOKEN` automatically and
+  the app switches to it with no code change.
+- Links expire after `SHARE_TTL_DAYS` (7 by default). `vercel.json` runs
+  `/api/share/cleanup` daily to delete expired bundles.
+- **Deployment Protection blocks this.** If it's enabled, opening the share link
+  on a phone will demand a Vercel login. Either turn protection off, or add
+  `/share` and `/api/share` to the protection bypass paths, otherwise the QR is
+  unusable on a device that isn't signed in.
+- Slides are re-encoded to JPEG (quality 92) for the share page — a 1080x1350
+  PNG is several MB, which is slow on cellular, and Instagram re-encodes to
+  JPEG regardless. Download ZIP still gives you the original PNGs.
 
 ## Notes for whoever maintains this
 

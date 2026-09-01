@@ -1,0 +1,157 @@
+/* Standalone styling: this page is opened on a phone, away from the app shell. */
+
+.share-wrap {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 28px 18px 64px;
+  font-family: -apple-system, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: #1f1d1a;
+}
+
+.share-head h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.share-head p {
+  margin: 0 0 20px;
+  color: #6d685f;
+  font-size: 14.5px;
+}
+
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.share-btn {
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 14px;
+  background: #e64a19;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.share-btn:disabled {
+  opacity: 0.6;
+}
+
+.share-btn.secondary {
+  background: #f3f1ec;
+  color: #1f1d1a;
+  padding: 11px 18px;
+  font-size: 14px;
+  width: auto;
+}
+
+.share-hint,
+.share-note {
+  display: block;
+  font-size: 13px;
+  color: #6d685f;
+  line-height: 1.5;
+}
+
+.share-hint {
+  margin: 0 0 22px;
+}
+
+.share-slides {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.share-slides li {
+  position: relative;
+}
+
+.share-slides img {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid #e9e5dd;
+}
+
+.share-slide-idx {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.share-text {
+  border-top: 1px solid #edeae3;
+  padding-top: 18px;
+  margin-bottom: 18px;
+}
+
+.share-text h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a49e93;
+}
+
+.share-text p {
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.share-foot {
+  border-top: 1px solid #edeae3;
+  padding-top: 16px;
+  font-size: 12.5px;
+  color: #a49e93;
+}
+
+.share-empty {
+  text-align: center;
+  padding: 64px 0;
+}
+
+.share-empty h1 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.share-empty p {
+  color: #6d685f;
+  font-size: 14.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .share-wrap { color: #f3efe8; background: #17140f; }
+  .share-head p, .share-hint, .share-note, .share-text p { color: #b5ada0; }
+  .share-btn.secondary { background: #2a251e; color: #f3efe8; }
+  .share-slides img { border-color: #362f26; }
+  .share-text, .share-foot { border-color: #322c24; }
+}
+
+body:has(.share-wrap) {
+  margin: 0;
+  background: #f6f5f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:has(.share-wrap) { background: #17140f; }
+}

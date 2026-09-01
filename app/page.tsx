@@ -9,6 +9,7 @@ import { buildImageZip, downloadBlob } from "@/lib/zip";
 import { buildBlankCopy } from "@/lib/blankCopy";
 import { pickPhotoFiles, uploadPhotoFile } from "@/lib/uploadPhoto";
 import PhotoCropper from "@/components/PhotoCropper";
+import SharePhoneModal from "@/components/SharePhoneModal";
 import type { GenerateCopyResult } from "@/lib/llm";
 import type { RenderSlideInput, TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
@@ -102,6 +103,8 @@ export default function Page() {
   const [cropTarget, setCropTarget] = useState<{ mode: "append" } | { mode: "replace"; index: number } | null>(null);
   const [cropPreview, setCropPreview] = useState<string | null>(null);
   const [cropping, setCropping] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [share, setShare] = useState<{ url: string; expiresAt: number } | null>(null);
 
   // In manual mode the photo+bubble carousel is built entirely on the canvas —
   // photos are added there with the + tile, so nothing is needed up front.
@@ -335,6 +338,31 @@ export default function Page() {
       setError(err instanceof Error ? err.message : "Failed to download the carousel.");
     } finally {
       setExportingAll(false);
+    }
+  }
+
+  /** Renders the carousel, stores it, and shows a QR to open it on a phone. */
+  async function handleSendToPhone() {
+    if (!copy || !selection || sharing) return;
+    setError(null);
+    setSharing(true);
+    try {
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: buildRenderInput(copy, selection.variant),
+          caption: copy.caption.caption,
+          firstComment: copy.caption.firstComment,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to create the share link.");
+      setShare({ url: json.url, expiresAt: json.expiresAt });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create the share link.");
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -666,6 +694,15 @@ export default function Page() {
                     "⬇ Download ZIP"
                   )}
                 </button>
+                <button className="btn" onClick={handleSendToPhone} disabled={sharing}>
+                  {sharing ? (
+                    <>
+                      <span className="spinner" /> Preparing…
+                    </>
+                  ) : (
+                    "📱 Send to phone"
+                  )}
+                </button>
                 <button className="btn secondary" onClick={() => copyText("caption", copy.caption.caption)}>
                   {copiedField === "caption" ? "Copied ✓" : "Copy caption"}
                 </button>
@@ -678,6 +715,8 @@ export default function Page() {
         </main>
 
         {error && <div className="error-banner">{error}</div>}
+
+        {share && <SharePhoneModal url={share.url} expiresAt={share.expiresAt} onClose={() => setShare(null)} />}
 
         {cropPreview && (
           <PhotoCropper

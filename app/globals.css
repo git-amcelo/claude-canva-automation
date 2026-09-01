@@ -1750,3 +1750,48 @@ input[type="number"] {
   gap: 10px;
   margin-top: 18px;
 }
+
+/* Send-to-phone modal */
+
+.share-modal {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-lg);
+  padding: 22px 24px;
+  width: min(420px, 100%);
+}
+
+.share-qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.share-qr img {
+  width: 100%;
+  max-width: 260px;
+  display: block;
+}
+
+.share-link {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-link input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.share-expiry {
+  margin: 10px 0 0;
+}
