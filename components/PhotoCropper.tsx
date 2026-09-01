@@ -66,6 +66,17 @@ export default function PhotoCropper({
     if (next) setRect(next);
   }, [fitRect]);
 
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const ro = new ResizeObserver(() => {
+      const next = fitRect();
+      if (next) setRect(next);
+    });
+    ro.observe(img);
+    return () => ro.disconnect();
+  }, [fitRect]);
+
   function clamp(r: Rect): Rect {
     const img = imgRef.current;
     if (!img) return r;
@@ -161,15 +172,21 @@ export default function PhotoCropper({
         </div>
 
         <div className="cropper-stage">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img ref={imgRef} src={src} alt="" onLoad={() => setRect(fitRect())} draggable={false} />
-          {rect && (
-            <div className="cropper-box" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }} onPointerDown={beginMove}>
-              {["nw", "ne", "sw", "se"].map((corner) => (
-                <span key={corner} className={`cropper-handle ${corner}`} onPointerDown={(e) => beginResize(e, corner)} />
-              ))}
-            </div>
-          )}
+          {/* The box is positioned against this wrapper, which shrink-wraps the
+              image. Positioning it against the stage instead would offset it by
+              however much the centred image is inset — the box would sit off
+              the photo, and clamping would fight every drag. */}
+          <div className="cropper-image-wrap">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img ref={imgRef} src={src} alt="" onLoad={() => setRect(fitRect())} draggable={false} />
+            {rect && (
+              <div className="cropper-box" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }} onPointerDown={beginMove}>
+                {["nw", "ne", "sw", "se"].map((corner) => (
+                  <span key={corner} className={`cropper-handle ${corner}`} onPointerDown={(e) => beginResize(e, corner)} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="cropper-actions">
