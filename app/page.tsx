@@ -7,6 +7,7 @@ import CopyReviewEditor from "@/components/CopyReviewEditor";
 import SlideStage from "@/components/preview/SlideStage";
 import { buildImageZip, downloadBlob } from "@/lib/zip";
 import { buildBlankCopy } from "@/lib/blankCopy";
+import { pickAndUploadPhotos } from "@/lib/uploadPhoto";
 import type { GenerateCopyResult } from "@/lib/llm";
 import type { RenderSlideInput, TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
@@ -18,6 +19,17 @@ interface Selection {
 }
 
 type ContentMode = "ai" | "manual";
+
+const MAX_SLIDES = 10;
+
+/** Moves one array item to a new index, returning a new array. */
+function moveItem<T>(items: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return items;
+  const next = [...items];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
 
 const FAMILY_CHIPS: { id: TemplateFamily; label: string }[] = [
   { id: "colorBlock", label: "Color-block" },
@@ -37,7 +49,6 @@ export default function Page() {
   const [contentMode, setContentMode] = useState<ContentMode>("ai");
   const [prompt, setPrompt] = useState("");
   const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
-  const [photoCaptions, setPhotoCaptions] = useState<string[]>([]);
   const [familyOverride, setFamilyOverride] = useState<TemplateFamily | null>(null);
   const [slideCountChoice, setSlideCountChoice] = useState<number | null>(null);
   const [variantChoice, setVariantChoice] = useState<Variant>("branded");
@@ -53,8 +64,10 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const showPhotoCaptions = familyOverride === "photoBubble" && contentMode === "manual";
-  const needsPhoto = familyOverride === "photoBubble" && photoDataUrls.length === 0;
+  // In manual mode the photo+bubble carousel is built entirely on the canvas —
+  // photos are added there with the + tile, so nothing is needed up front.
+  const canvasManagesPhotos = familyOverride === "photoBubble" && contentMode === "manual";
+  const needsPhoto = familyOverride === "photoBubble" && contentMode === "ai" && photoDataUrls.length === 0;
   const needsTemplate = familyOverride === null;
   const canStart = !needsTemplate && !needsPhoto && !generating && (contentMode === "manual" || prompt.trim().length > 0);
 
@@ -103,10 +116,67 @@ export default function Page() {
     if (!canStart || !familyOverride || contentMode !== "manual") return;
     setError(null);
     const slideCount =
-      familyOverride === "colorBlock" ? 5 : familyOverride === "photoBubble" ? Math.min(photoDataUrls.length, 10) : slideCountChoice ?? 3;
-    const blank = buildBlankCopy(familyOverride, { slideCount, photoBubbleTexts: photoCaptions });
+      familyOverride === "colorBlock"
+        ? 5
+        : familyOverride === "photoBubble"
+          ? // Always at least one slide, so there's a canvas to add the first photo to.
+            Math.min(Math.max(photoDataUrls.length, 1), 10)
+          : slideCountChoice ?? 3;
+    const blank = buildBlankCopy(familyOverride, { slideCount });
     setCopy(blank);
     setSelection({ family: familyOverride, variant: variantChoice, slideCount, auto: false });
+  }
+
+  /** Adds photos from the canvas's + tile, each becoming a new slide. */
+  async function handleAddPhoto() {
+    setError(null);
+    try {
+      const urls = await pickAndUploadPhotos({ multiple: true });
+      if (urls.length === 0) return;
+      const room = MAX_SLIDES - photoDataUrls.length;
+      if (room <= 0) {
+        setError(`You can use at most ${MAX_SLIDES} photos.`);
+        return;
+      }
+      const added = urls.slice(0, room);
+      const nextPhotos = [...photoDataUrls, ...added];
+      setPhotoDataUrls(nextPhotos);
+
+      // The first slide starts out photo-less, so it absorbs the first upload
+      // instead of adding a slide alongside it.
+      const absorbed = photoDataUrls.length === 0 ? 1 : 0;
+      const newSlides = added.length - absorbed;
+      if (newSlides > 0) {
+        setCopy((prev) => {
+          if (!prev || prev.family !== "photoBubble") return prev;
+          return { ...prev, slides: [...prev.slides, ...Array.from({ length: newSlides }, () => ({ bubbleText: "" }))] };
+        });
+      }
+      setSelection((prev) => (prev ? { ...prev, slideCount: nextPhotos.length } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add the photo.");
+    }
+  }
+
+  /** Swaps the photo behind one slide (or fills an empty one). */
+  async function handleReplacePhoto(index: number) {
+    setError(null);
+    try {
+      const [url] = await pickAndUploadPhotos();
+      if (!url) return;
+      setPhotoDataUrls((prev) => (index < prev.length ? prev.map((p, i) => (i === index ? url : p)) : [...prev, url]));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to replace the photo.");
+    }
+  }
+
+  /** Reorders a slide and its photo together, so bubble text stays with its image. */
+  function handleReorderSlides(from: number, to: number) {
+    setPhotoDataUrls((prev) => moveItem(prev, from, to));
+    setCopy((prev) => {
+      if (!prev || prev.family !== "photoBubble") return prev;
+      return { ...prev, slides: moveItem(prev.slides, from, to) };
+    });
   }
 
   async function handleApplyEdit() {
@@ -201,7 +271,6 @@ export default function Page() {
   function handleStartOver() {
     setPrompt("");
     setPhotoDataUrls([]);
-    setPhotoCaptions([]);
     setFamilyOverride(null);
     setSlideCountChoice(null);
     setCopy(null);
@@ -313,19 +382,17 @@ export default function Page() {
             </div>
           )}
 
-          <details className="photo-details" open={familyOverride === "photoBubble"}>
-            <summary>
-              Add photos (optional — required for Photo + bubble; one photo per slide, in order)
-              {showPhotoCaptions ? " — add each slide's callout text right on its photo below" : ""}
-            </summary>
-            <PhotoUpload
-              photos={photoDataUrls}
-              onChange={setPhotoDataUrls}
-              onError={setError}
-              captions={showPhotoCaptions ? photoCaptions : undefined}
-              onCaptionsChange={showPhotoCaptions ? setPhotoCaptions : undefined}
-            />
-          </details>
+          {canvasManagesPhotos ? (
+            <p className="hint photo-canvas-note">
+              Photos are added on the slide itself — hit Start, then use the <strong>+</strong> tile to add each one and type its
+              callout straight onto the photo.
+            </p>
+          ) : (
+            <details className="photo-details" open={familyOverride === "photoBubble"}>
+              <summary>Add photos (optional — required for Photo + bubble; one photo per slide, in order)</summary>
+              <PhotoUpload photos={photoDataUrls} onChange={setPhotoDataUrls} onError={setError} />
+            </details>
+          )}
 
           <div className="generate-row">
             <button
@@ -388,6 +455,9 @@ export default function Page() {
                 photoDataUrls={photoDataUrls}
                 onExportOne={handleExportSlide}
                 exportingIndex={exportingIndex}
+                onAddPhoto={handleAddPhoto}
+                onReplacePhoto={handleReplacePhoto}
+                onReorderSlides={handleReorderSlides}
               />
 
               {contentMode === "ai" && (

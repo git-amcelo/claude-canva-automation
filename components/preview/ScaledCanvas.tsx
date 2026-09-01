@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useCanvasScale } from "./useCanvasScale";
+import { ScaleContext } from "./ScaleContext";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/templates/shared/constants";
 
 /**
@@ -38,7 +39,7 @@ export default function ScaledCanvas({
           pointerEvents: interactive ? "auto" : "none",
         }}
       >
-        {children}
+        <ScaleContext.Provider value={scale}>{children}</ScaleContext.Provider>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, PHOTO_BUBBLE_COLOR } from "./shared/constants";
+import { readableTextOn } from "./shared/color";
 import type { PhotoBubbleSlide, Variant } from "./shared/types";
 
 /**
@@ -8,6 +9,11 @@ import type { PhotoBubbleSlide, Variant } from "./shared/types";
  */
 export function renderPhotoBubblePage(variant: Variant, slide: PhotoBubbleSlide, photoDataUrl: string) {
   const colors = PHOTO_BUBBLE_COLOR[variant];
+  const bubbleFill = slide.bubbleColor || colors.bubble;
+  // A custom fill needs its own contrast check; the variant defaults already pair correctly.
+  const bubbleTextColor = slide.bubbleColor ? readableTextOn(slide.bubbleColor) : colors.text;
+  const offset = slide.bubblePosition;
+  const dragTransform = offset && (offset.x !== 0 || offset.y !== 0) ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : {};
 
   return (
     <div
@@ -44,9 +50,10 @@ export function renderPhotoBubblePage(variant: Variant, slide: PhotoBubbleSlide,
             display: "flex",
             maxWidth: 900,
             borderRadius: 24,
-            background: colors.bubble,
+            background: bubbleFill,
             padding: "26px 48px",
             boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+            ...dragTransform,
           }}
         >
           <div
@@ -55,7 +62,7 @@ export function renderPhotoBubblePage(variant: Variant, slide: PhotoBubbleSlide,
               fontFamily: "Inter",
               fontWeight: 800,
               fontSize: 46,
-              color: colors.text,
+              color: bubbleTextColor,
               textAlign: "center",
               lineHeight: 1.3,
               justifyContent: "center",

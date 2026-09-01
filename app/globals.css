@@ -1347,28 +1347,135 @@ input[type="number"] {
   margin-top: 14px;
 }
 
-/* Per-photo caption (photo + bubble, "I have the content" mode) */
+.photo-canvas-note {
+  margin-top: 16px;
+  line-height: 1.5;
+}
 
-.photo-thumb.has-caption {
+/* Dragging elements around the canvas */
+
+.editable-text.is-dragging {
+  box-shadow: 0 0 0 6px rgba(46, 124, 246, 0.22), 0 0 0 2px #2e7cf6;
+  background: rgba(46, 124, 246, 0.12);
+}
+
+/* Add-a-photo tile at the end of the thumbnail rail */
+
+.stage-thumb.add-tile {
+  aspect-ratio: 1080 / 1350;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-style: dashed;
+  border-width: 2px;
+  color: var(--ink-faint);
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease), background-color 0.15s var(--ease);
 }
 
-.photo-thumb-caption {
-  width: 100%;
-  border: none;
-  border-top: 1.5px solid var(--line);
-  background: var(--panel);
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 1.5;
-  font-family: inherit;
-  padding: 10px 11px 11px;
-  resize: none;
-  min-height: 68px;
-}
-
-.photo-thumb-caption:focus {
-  outline: none;
+.stage-thumb.add-tile:hover {
+  border-color: var(--accent);
+  color: var(--accent);
   background: var(--accent-soft);
+}
+
+.stage-thumb.add-tile .plus {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.stage-thumb.add-tile .add-label {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.stage-thumb.dragging {
+  opacity: 0.35;
+}
+
+.stage-thumb.drop-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Floating colour picker */
+
+.color-picker-anchor {
+  position: fixed;
+  z-index: 50;
+}
+
+.color-picker {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 196px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+}
+
+.color-picker-title {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--ink-faint);
+  margin-bottom: 9px;
+}
+
+.color-picker-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s var(--ease), box-shadow 0.12s var(--ease);
+}
+
+.color-swatch:hover {
+  transform: scale(1.12);
+}
+
+.color-swatch.active {
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent);
+}
+
+.color-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.color-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.color-custom input[type="color"] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
 }

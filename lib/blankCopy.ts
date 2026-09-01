@@ -9,10 +9,7 @@ const blankItems = (n: number) => Array.from({ length: n }, () => ({ title: "", 
  * "I already have the content" flow: the client seeds this, then the user
  * fills every field in directly on the slide canvas (paste from elsewhere).
  */
-export function buildBlankCopy(
-  family: TemplateFamily,
-  opts: { slideCount: number; photoBubbleTexts?: string[] }
-): GenerateCopyResult {
+export function buildBlankCopy(family: TemplateFamily, opts: { slideCount: number }): GenerateCopyResult {
   const caption = { caption: "", firstComment: "" };
 
   if (family === "colorBlock") {
@@ -50,11 +47,7 @@ export function buildBlankCopy(
     return { family, caption, slides: Array.from({ length: opts.slideCount }, () => ({ text: "" })) };
   }
 
-  // photoBubble — one slide per photo; carries over per-photo captions if the
-  // user already typed/pasted them onto each photo during upload.
-  return {
-    family,
-    caption,
-    slides: Array.from({ length: opts.slideCount }, (_, i) => ({ bubbleText: opts.photoBubbleTexts?.[i] ?? "" })),
-  };
+  // photoBubble — one slide per photo; text and photos are both filled in on
+  // the canvas itself, so every slide starts empty.
+  return { family, caption, slides: Array.from({ length: opts.slideCount }, () => ({ bubbleText: "" })) };
 }

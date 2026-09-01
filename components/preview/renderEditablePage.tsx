@@ -13,11 +13,40 @@ export function pageCountFor(copy: GenerateCopyResult): number {
   return copy.family === "colorBlock" ? 5 : copy.slides.length;
 }
 
+export interface PageInteractions {
+  patch: PatchFn;
+  /** colorBlock: pressing the slide background (opens the colour picker). */
+  onBackgroundClick: (e: React.MouseEvent, pageIndex: number) => void;
+  /** photoBubble: swap the photo behind this slide. */
+  onReplacePhoto: (index: number) => void;
+  /** photoBubble: recolour this slide's bubble. */
+  onBubbleClick: (e: React.MouseEvent, index: number) => void;
+}
+
 /** Dispatches to the right editable-canvas renderer for the copy's family. */
-export function renderEditablePage(copy: GenerateCopyResult, index: number, variant: Variant, photoDataUrls: string[], patch: PatchFn) {
-  if (copy.family === "colorBlock") return renderEditableColorBlockPage(index, copy.slides, patch);
+export function renderEditablePage(
+  copy: GenerateCopyResult,
+  index: number,
+  variant: Variant,
+  photoDataUrls: string[],
+  interactions: PageInteractions
+) {
+  const { patch } = interactions;
+
+  if (copy.family === "colorBlock") {
+    return renderEditableColorBlockPage(index, copy.slides, patch, (e) => interactions.onBackgroundClick(e, index));
+  }
   if (copy.family === "tweetCard") return renderEditableTweetCardPage(variant, copy.slides[index], index, patch);
   if (copy.family === "textPost") return renderEditableTextPostPage(copy.slides[index], index, patch);
+
   const photo = photoDataUrls.length > 0 ? photoDataUrls[index % photoDataUrls.length] : "";
-  return renderEditablePhotoBubblePage(variant, copy.slides[index], photo, index, patch);
+  return renderEditablePhotoBubblePage(
+    variant,
+    copy.slides[index],
+    photo,
+    index,
+    patch,
+    interactions.onReplacePhoto,
+    interactions.onBubbleClick
+  );
 }

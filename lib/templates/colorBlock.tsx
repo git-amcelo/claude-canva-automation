@@ -1,5 +1,20 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COLOR_BLOCK_PAGE_BG, BRAND, EYEBROW_LABEL } from "./shared/constants";
-import type { ColorBlockSlides } from "./shared/types";
+import type { ColorBlockSlides, Offset } from "./shared/types";
+
+/**
+ * Turns a stored drag offset into the `transform` Satori/CSS needs. Returns
+ * undefined for untouched elements so their style objects stay byte-identical
+ * to what they were before drag support existed.
+ */
+export function offsetStyle(offset?: Offset): { transform?: string } {
+  if (!offset || (offset.x === 0 && offset.y === 0)) return {};
+  return { transform: `translate(${offset.x}px, ${offset.y}px)` };
+}
+
+/** Background for a page, honouring a user override. */
+function pageBg(slides: ColorBlockSlides, pageIndex: number): string {
+  return slides.backgrounds?.[pageIndex] || COLOR_BLOCK_PAGE_BG[pageIndex];
+}
 
 const eyebrow = (color: string) => (
   <div
@@ -17,7 +32,7 @@ const eyebrow = (color: string) => (
   </div>
 );
 
-function HookPage({ data }: { data: ColorBlockSlides["hook"] }) {
+function HookPage({ data, bg, positions }: { data: ColorBlockSlides["hook"]; bg: string; positions?: Record<string, Offset> }) {
   return (
     <div
       style={{
@@ -27,7 +42,7 @@ function HookPage({ data }: { data: ColorBlockSlides["hook"] }) {
         justifyContent: "flex-start",
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
-        background: COLOR_BLOCK_PAGE_BG[0],
+        background: bg,
         padding: "90px 70px",
         textAlign: "center",
       }}
@@ -41,6 +56,7 @@ function HookPage({ data }: { data: ColorBlockSlides["hook"] }) {
           color: BRAND.white,
           lineHeight: 1.4,
           marginBottom: 30,
+          ...offsetStyle(positions?.["hook.subhead"]),
         }}
       >
         {data.subhead}
@@ -52,6 +68,7 @@ function HookPage({ data }: { data: ColorBlockSlides["hook"] }) {
           fontSize: 76,
           color: BRAND.orange,
           lineHeight: 1.15,
+          ...offsetStyle(positions?.["hook.headline"]),
         }}
       >
         {data.headline}
@@ -65,6 +82,7 @@ function HookPage({ data }: { data: ColorBlockSlides["hook"] }) {
           fontSize: 34,
           color: BRAND.white,
           marginBottom: 14,
+          ...offsetStyle(positions?.["hook.cta"]),
         }}
       >
         {data.cta}
@@ -93,6 +111,8 @@ function ItemListPage({
   items,
   itemTitleColor,
   itemBodyColor,
+  keyPrefix,
+  positions,
 }: {
   bg: string;
   headline: string;
@@ -101,6 +121,8 @@ function ItemListPage({
   items: { title: string; body: string }[];
   itemTitleColor: string;
   itemBodyColor: string;
+  keyPrefix: "problem" | "fix";
+  positions?: Record<string, Offset>;
 }) {
   return (
     <div
@@ -124,6 +146,7 @@ function ItemListPage({
           justifyContent: "center",
           lineHeight: 1.2,
           marginBottom: 40,
+          ...offsetStyle(positions?.[`${keyPrefix}.headline`]),
         }}
       >
         {headline}
@@ -152,6 +175,7 @@ function ItemListPage({
                 color: itemTitleColor,
                 lineHeight: 1.3,
                 marginBottom: 6,
+                ...offsetStyle(positions?.[`${keyPrefix}.item.${i}.title`]),
               }}
             >
               {item.title}
@@ -164,6 +188,7 @@ function ItemListPage({
                 fontSize: 22,
                 color: itemBodyColor,
                 lineHeight: 1.4,
+                ...offsetStyle(positions?.[`${keyPrefix}.item.${i}.body`]),
               }}
             >
               {item.body}
@@ -175,7 +200,7 @@ function ItemListPage({
   );
 }
 
-function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
+function FeaturesPage({ data, bg, positions }: { data: ColorBlockSlides["features"]; bg: string; positions?: Record<string, Offset> }) {
   return (
     <div
       style={{
@@ -183,7 +208,7 @@ function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
         flexDirection: "column",
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
-        background: COLOR_BLOCK_PAGE_BG[3],
+        background: bg,
         padding: "80px 70px",
       }}
     >
@@ -197,6 +222,7 @@ function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
           textAlign: "center",
           justifyContent: "center",
           marginBottom: 36,
+          ...offsetStyle(positions?.["features.headline"]),
         }}
       >
         {data.headline}
@@ -212,6 +238,7 @@ function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
                 fontSize: 25,
                 color: "#111111",
                 lineHeight: 1.35,
+                ...offsetStyle(positions?.[`features.item.${i}.title`]),
               }}
             >
               {i + 1}. {item.title}
@@ -226,6 +253,7 @@ function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
                   color: "#2b2b2b",
                   lineHeight: 1.4,
                   marginTop: 4,
+                  ...offsetStyle(positions?.[`features.item.${i}.body`]),
                 }}
               >
                 {item.body}
@@ -238,7 +266,7 @@ function FeaturesPage({ data }: { data: ColorBlockSlides["features"] }) {
   );
 }
 
-function CtaPage({ data }: { data: ColorBlockSlides["cta"] }) {
+function CtaPage({ data, bg, positions }: { data: ColorBlockSlides["cta"]; bg: string; positions?: Record<string, Offset> }) {
   return (
     <div
       style={{
@@ -246,7 +274,7 @@ function CtaPage({ data }: { data: ColorBlockSlides["cta"] }) {
         flexDirection: "column",
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
-        background: COLOR_BLOCK_PAGE_BG[4],
+        background: bg,
         padding: "90px 70px",
       }}
     >
@@ -270,6 +298,7 @@ function CtaPage({ data }: { data: ColorBlockSlides["cta"] }) {
           color: BRAND.white,
           lineHeight: 1.3,
           marginBottom: 24,
+          ...offsetStyle(positions?.["cta.headline"]),
         }}
       >
         {data.headline}
@@ -282,6 +311,7 @@ function CtaPage({ data }: { data: ColorBlockSlides["cta"] }) {
           fontSize: 26,
           color: BRAND.white,
           lineHeight: 1.4,
+          ...offsetStyle(positions?.["cta.body"]),
         }}
       >
         {data.body}
@@ -305,37 +335,42 @@ function CtaPage({ data }: { data: ColorBlockSlides["cta"] }) {
 
 /** Returns the JSX for one of the 5 fixed color-block pages (0-indexed). */
 export function renderColorBlockPage(pageIndex: number, data: ColorBlockSlides) {
+  const positions = data.positions;
   switch (pageIndex) {
     case 0:
-      return <HookPage data={data.hook} />;
+      return <HookPage data={data.hook} bg={pageBg(data, 0)} positions={positions} />;
     case 1:
       return (
         <ItemListPage
-          bg={COLOR_BLOCK_PAGE_BG[1]}
+          bg={pageBg(data, 1)}
           headline={data.problem.headline}
           headlineColor={BRAND.orange}
           labelPrefix="PROBLEM"
           items={data.problem.items}
           itemTitleColor="#111111"
           itemBodyColor={BRAND.orange}
+          keyPrefix="problem"
+          positions={positions}
         />
       );
     case 2:
       return (
         <ItemListPage
-          bg={COLOR_BLOCK_PAGE_BG[2]}
+          bg={pageBg(data, 2)}
           headline={data.fix.headline}
           headlineColor={BRAND.orange}
           labelPrefix="FIX"
           items={data.fix.items}
           itemTitleColor={BRAND.white}
           itemBodyColor={BRAND.orange}
+          keyPrefix="fix"
+          positions={positions}
         />
       );
     case 3:
-      return <FeaturesPage data={data.features} />;
+      return <FeaturesPage data={data.features} bg={pageBg(data, 3)} positions={positions} />;
     case 4:
-      return <CtaPage data={data.cta} />;
+      return <CtaPage data={data.cta} bg={pageBg(data, 4)} positions={positions} />;
     default:
       throw new Error(`colorBlock only has 5 pages (0-4), got index ${pageIndex}`);
   }

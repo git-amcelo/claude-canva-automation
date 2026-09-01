@@ -1,30 +1,23 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { resizeImageForUpload } from "@/lib/clientImage";
+import { uploadPhotoFile } from "@/lib/uploadPhoto";
 
-const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_PHOTOS = 10;
 
 export default function PhotoUpload({
   photos,
   onChange,
   onError,
-  captions,
-  onCaptionsChange,
 }: {
   photos: string[];
   onChange: (photos: string[]) => void;
   onError: (message: string) => void;
-  /** Optional per-photo content field (one caption per photo, same order) — pass alongside onCaptionsChange to show it. */
-  captions?: string[];
-  onCaptionsChange?: (captions: string[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  const showCaptions = !!captions && !!onCaptionsChange;
 
   function moveTo(from: number, to: number) {
     if (from === to) return;
@@ -32,37 +25,6 @@ export default function PhotoUpload({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     onChange(next);
-
-    if (showCaptions) {
-      const nextCaptions = [...captions!];
-      const [movedCaption] = nextCaptions.splice(from, 1);
-      nextCaptions.splice(to, 0, movedCaption);
-      onCaptionsChange!(nextCaptions);
-    }
-  }
-
-  async function uploadOne(file: File): Promise<string | null> {
-    const isHeic = /\.hei[cf]$/i.test(file.name) || file.type === "image/heic" || file.type === "image/heif";
-    if (isHeic) {
-      onError(
-        "HEIC photos (the default iPhone format) aren't supported. On your iPhone, when sharing/exporting the photo, choose \"Most Compatible\" (JPEG), or convert it first, then upload again."
-      );
-      return null;
-    }
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      onError(`Unsupported file type "${file.type || "unknown"}". Please upload JPEG, PNG, or WebP photos.`);
-      return null;
-    }
-
-    // Downscale before sending — keeps the request well under the hosting
-    // platform's body-size limit; we only ever need ~1080x1350 for the render.
-    const resized = await resizeImageForUpload(file);
-    const formData = new FormData();
-    formData.append("photo", resized, "photo.jpg");
-    const res = await fetch("/api/upload-photo", { method: "POST", body: formData });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Upload failed.");
-    return json.photoDataUrl as string;
   }
 
   async function handleFiles(files: File[]) {
@@ -76,14 +38,8 @@ export default function PhotoUpload({
     setUploading(true);
     try {
       const uploaded: string[] = [];
-      for (const file of files.slice(0, room)) {
-        const dataUrl = await uploadOne(file);
-        if (dataUrl) uploaded.push(dataUrl);
-      }
-      if (uploaded.length > 0) {
-        onChange([...photos, ...uploaded]);
-        if (showCaptions) onCaptionsChange!([...captions!, ...uploaded.map(() => "")]);
-      }
+      for (const file of files.slice(0, room)) uploaded.push(await uploadPhotoFile(file));
+      if (uploaded.length > 0) onChange([...photos, ...uploaded]);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -93,7 +49,6 @@ export default function PhotoUpload({
 
   function removePhoto(index: number) {
     onChange(photos.filter((_, i) => i !== index));
-    if (showCaptions) onCaptionsChange!(captions!.filter((_, i) => i !== index));
   }
 
   return (
@@ -103,7 +58,7 @@ export default function PhotoUpload({
           <div className="photo-thumbs">
             {photos.map((dataUrl, i) => (
               <div
-                className={`photo-thumb${showCaptions ? " has-caption" : ""}${dragIndex === i ? " dragging" : ""}${
+                className={`photo-thumb${dragIndex === i ? " dragging" : ""}${
                   overIndex === i && dragIndex !== null && dragIndex !== i ? " drop-target" : ""
                 }`}
                 key={i}
@@ -150,19 +105,6 @@ export default function PhotoUpload({
                     ×
                   </button>
                 </div>
-                {showCaptions && (
-                  <textarea
-                    className="photo-thumb-caption"
-                    placeholder="Callout text for this photo…"
-                    value={captions![i] ?? ""}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      const next = [...captions!];
-                      next[i] = e.target.value;
-                      onCaptionsChange!(next);
-                    }}
-                  />
-                )}
               </div>
             ))}
           </div>
