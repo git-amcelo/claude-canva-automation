@@ -398,6 +398,12 @@ export default function Page() {
     setStep(1);
   }
 
+  function handleConfirmStartOver() {
+    if (window.confirm("Are you sure you want to start again? All progress will be lost.")) {
+      handleStartOver();
+    }
+  }
+
   /** Steps past setup only make sense once there's a carousel to work on. */
   const canVisitStep = (n: number) => n === 1 || (!!copy && !!selection);
 
@@ -443,16 +449,40 @@ export default function Page() {
 
           {step > 1 && (
             <div className="step-nav">
-              <button className="btn secondary" onClick={() => setStep(step - 1)}>
-                ← {step === 3 ? "Back to slides" : "Back"}
-              </button>
+              <div className="step-nav-left">
+                <button className="btn secondary" onClick={() => setStep(step - 1)}>
+                  ← {step === 3 ? "Back to slides" : "Back"}
+                </button>
+                {step === 3 && copy && (
+                  <>
+                    <button className="btn secondary" onClick={handleDownloadAll} disabled={exportingAll}>
+                      {exportingAll ? (
+                        <>
+                          <span className="spinner" /> Rendering…
+                        </>
+                      ) : (
+                        "⬇ Download ZIP"
+                      )}
+                    </button>
+                    <button className="btn secondary" onClick={handleSendToPhone} disabled={sharing}>
+                      {sharing ? (
+                        <>
+                          <span className="spinner" /> Preparing…
+                        </>
+                      ) : (
+                        "📱 Send to phone"
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
               {step === 2 ? (
                 <button className="btn" onClick={() => setStep(3)}>
                   Next: export →
                 </button>
               ) : (
-                <button className="btn secondary" onClick={handleStartOver}>
-                  Start a new post
+                <button className="btn secondary" onClick={handleConfirmStartOver}>
+                  Start again
                 </button>
               )}
             </div>
@@ -597,8 +627,8 @@ export default function Page() {
             {needsPhoto && <span className="hint">Photo + bubble needs a photo first.</span>}
             {needsSlideCount && !needsTemplate && <span className="hint">Choose how many slides first.</span>}
             {copy && !generating && (
-              <button className="btn secondary small" onClick={handleStartOver}>
-                New post
+              <button className="btn secondary small" onClick={handleConfirmStartOver}>
+                Start again
               </button>
             )}
           </div>
@@ -667,31 +697,6 @@ export default function Page() {
                 <summary>Edit as a form instead — including the caption</summary>
                 <CopyReviewEditor copy={copy} onChange={handleCopyChange} />
               </details>
-            </>
-          )}
-
-          {step === 3 && copy && (
-            <>
-              <div className="export-row">
-                <button className="btn" onClick={handleDownloadAll} disabled={exportingAll}>
-                  {exportingAll ? (
-                    <>
-                      <span className="spinner" /> Rendering…
-                    </>
-                  ) : (
-                    "⬇ Download ZIP"
-                  )}
-                </button>
-                <button className="btn" onClick={handleSendToPhone} disabled={sharing}>
-                  {sharing ? (
-                    <>
-                      <span className="spinner" /> Preparing…
-                    </>
-                  ) : (
-                    "📱 Send to phone"
-                  )}
-                </button>
-              </div>
             </>
           )}
         </main>
