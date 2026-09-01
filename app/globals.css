@@ -267,7 +267,7 @@ h1 {
   flex-wrap: wrap;
   row-gap: 10px;
   gap: 0;
-  margin: 0;
+  margin: 0 0 26px;
   padding: 0;
 }
 .step {
@@ -278,6 +278,25 @@ h1 {
   font-weight: 600;
   color: var(--ink-faint);
   white-space: nowrap;
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease);
+}
+.step:disabled {
+  cursor: default;
+}
+.step:not(:disabled):hover {
+  color: var(--ink);
+}
+.step.is-done {
+  color: var(--ink-soft);
+}
+.step.is-done .step-index {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent-ink);
 }
 .step-index {
   width: 19px;
@@ -1504,4 +1523,28 @@ input[type="number"] {
   border-radius: 6px;
   background: none;
   cursor: pointer;
+}
+
+/* Stepper navigation */
+
+.step-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.export-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.generating-note {
+  margin-top: 18px;
 }

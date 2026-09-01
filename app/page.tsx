@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import MicButton from "@/components/MicButton";
 import PhotoUpload from "@/components/PhotoUpload";
 import CopyReviewEditor from "@/components/CopyReviewEditor";
@@ -45,7 +45,33 @@ const FAMILY_NAMES: Record<TemplateFamily, string> = {
   textPost: "Text post",
 };
 
+const STEPS = [
+  { n: 1, label: "Set up" },
+  { n: 2, label: "Edit slides" },
+  { n: 3, label: "Caption & export" },
+] as const;
+
+const STEP_HEADINGS: Record<number, { title: string; subtitle: (mode: ContentMode) => string }> = {
+  1: {
+    title: "Describe the post. Get the carousel.",
+    subtitle: (mode) =>
+      mode === "ai"
+        ? "Type what the post is about — Claude picks the template, writes the copy and renders every slide."
+        : "Already have the copy from somewhere else? Skip the AI — pick a style, then paste your content straight onto each slide.",
+  },
+  2: {
+    title: "Edit your slides.",
+    subtitle: () => "Click any text to rewrite it, drag it to move it, and recolour backgrounds or bubbles as you go.",
+  },
+  3: {
+    title: "Caption, then export.",
+    subtitle: () =>
+      "The link goes in the first comment, not the caption — Instagram captions can't have clickable links. Then download and post it yourself.",
+  },
+};
+
 export default function Page() {
+  const [step, setStep] = useState(1);
   const [contentMode, setContentMode] = useState<ContentMode>("ai");
   const [prompt, setPrompt] = useState("");
   const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
@@ -104,6 +130,7 @@ export default function Page() {
       if (!res.ok) throw new Error(json.error || "Failed to generate the post.");
       setCopy(json.copy);
       setSelection(json.selection);
+      setStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate the post.");
     } finally {
@@ -125,6 +152,7 @@ export default function Page() {
     const blank = buildBlankCopy(familyOverride, { slideCount });
     setCopy(blank);
     setSelection({ family: familyOverride, variant: variantChoice, slideCount, auto: false });
+    setStep(2);
   }
 
   /** Adds photos from the canvas's + tile, each becoming a new slide. */
@@ -277,7 +305,11 @@ export default function Page() {
     setSelection(null);
     setEditInstruction("");
     setError(null);
+    setStep(1);
   }
+
+  /** Steps past setup only make sense once there's a carousel to work on. */
+  const canVisitStep = (n: number) => n === 1 || (!!copy && !!selection);
 
   return (
     <>
@@ -295,14 +327,32 @@ export default function Page() {
             </div>
           </div>
 
-          <p className="eyebrow">Carousel Generator</p>
-          <h1>Describe the post. Get the carousel.</h1>
-          <p className="subtitle">
-            {contentMode === "ai"
-              ? "Type what the post is about — Claude picks the template, writes the copy and renders every slide. Then tweak it in plain English or click straight on a slide to edit."
-              : "Already have the copy from somewhere else? Skip the AI — pick a style, then paste your content straight onto each slide."}
-          </p>
+          <ol className="steps" aria-label="Progress">
+            {STEPS.map((s, i) => (
+              <Fragment key={s.n}>
+                {i > 0 && <li className="step-rule" aria-hidden="true" />}
+                <li>
+                  <button
+                    type="button"
+                    className={`step${step === s.n ? " is-active" : ""}${s.n < step ? " is-done" : ""}`}
+                    onClick={() => canVisitStep(s.n) && setStep(s.n)}
+                    disabled={!canVisitStep(s.n)}
+                    aria-current={step === s.n ? "step" : undefined}
+                  >
+                    <span className="step-index">{s.n < step ? "✓" : s.n}</span>
+                    {s.label}
+                  </button>
+                </li>
+              </Fragment>
+            ))}
+          </ol>
 
+          <p className="eyebrow">Carousel Generator</p>
+          <h1>{STEP_HEADINGS[step].title}</h1>
+          <p className="subtitle">{STEP_HEADINGS[step].subtitle(contentMode)}</p>
+
+          {step === 1 && (
+          <>
           <div className="mode-toggle" role="group" aria-label="Content source">
             <button className={contentMode === "ai" ? "active" : ""} onClick={() => setContentMode("ai")}>
               ✨ Write with AI
@@ -412,35 +462,27 @@ export default function Page() {
             </button>
             {needsTemplate && (contentMode === "manual" || prompt.trim().length > 0) && <span className="hint">Pick a style above first.</span>}
             {needsPhoto && <span className="hint">Photo + bubble needs a photo first.</span>}
-            {(copy || generating) && !needsPhoto && (
-              <button className="btn secondary small" onClick={handleStartOver} disabled={generating}>
+            {copy && !generating && (
+              <button className="btn secondary small" onClick={handleStartOver}>
                 New post
               </button>
             )}
           </div>
-        </main>
 
-        {generating && (
-          <section className="section-panel">
-            <div className="status-line">
-              <span className="spinner" />
-              {`Writing copy for the ${familyOverride ? FAMILY_NAMES[familyOverride] : "chosen"} template and rendering slides…`}
+          {generating && (
+            <div className="generating-note">
+              <div className="status-line">
+                <span className="spinner" />
+                {`Writing copy for the ${familyOverride ? FAMILY_NAMES[familyOverride] : "chosen"} template…`}
+              </div>
             </div>
-            <div className="preview-grid">
-              {Array.from({ length: familyOverride === "colorBlock" ? 5 : 4 }, (_, i) => (
-                <div className="skeleton-tile" key={i} />
-              ))}
-            </div>
-          </section>
-        )}
+          )}
+          </>
+          )}
 
-        {copy && selection && (
-          <>
-            <section className="section-panel">
+          {step === 2 && copy && selection && (
+            <>
               <div className="result-head">
-                <div className="section-label" style={{ margin: 0 }}>
-                  Your carousel
-                </div>
                 <span className="sel-summary">
                   {FAMILY_NAMES[selection.family]}
                   {selection.family !== "colorBlock" ? ` · ${selection.variant}` : ""} · {selection.slideCount} slides
@@ -490,10 +532,20 @@ export default function Page() {
                 <summary>Edit as a form instead</summary>
                 <CopyReviewEditor copy={copy} onChange={handleCopyChange} />
               </details>
-            </section>
 
-            <section className="section-panel">
-              <div className="section-label">Caption</div>
+              <div className="step-nav">
+                <button className="btn secondary" onClick={() => setStep(1)}>
+                  ← Back
+                </button>
+                <button className="btn" onClick={() => setStep(3)}>
+                  Next: caption &amp; export →
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 3 && copy && (
+            <>
               <label className="field-label">
                 Caption
                 <textarea
@@ -508,27 +560,36 @@ export default function Page() {
                   onChange={(e) => handleCopyChange({ ...copy, caption: { ...copy.caption, firstComment: e.target.value } })}
                 />
               </label>
-            </section>
 
-            <div className="ship-bar">
-              <button className="btn" onClick={handleDownloadAll} disabled={!copy || exportingAll}>
-                {exportingAll ? (
-                  <>
-                    <span className="spinner" /> Rendering…
-                  </>
-                ) : (
-                  "⬇ Download ZIP"
-                )}
-              </button>
-              <button className="btn secondary" onClick={() => copyText("caption", copy.caption.caption)}>
-                {copiedField === "caption" ? "Copied ✓" : "Copy caption"}
-              </button>
-              <button className="btn secondary" onClick={() => copyText("comment", copy.caption.firstComment)}>
-                {copiedField === "comment" ? "Copied ✓" : "Copy first comment"}
-              </button>
-            </div>
-          </>
-        )}
+              <div className="export-row">
+                <button className="btn" onClick={handleDownloadAll} disabled={exportingAll}>
+                  {exportingAll ? (
+                    <>
+                      <span className="spinner" /> Rendering…
+                    </>
+                  ) : (
+                    "⬇ Download ZIP"
+                  )}
+                </button>
+                <button className="btn secondary" onClick={() => copyText("caption", copy.caption.caption)}>
+                  {copiedField === "caption" ? "Copied ✓" : "Copy caption"}
+                </button>
+                <button className="btn secondary" onClick={() => copyText("comment", copy.caption.firstComment)}>
+                  {copiedField === "comment" ? "Copied ✓" : "Copy first comment"}
+                </button>
+              </div>
+
+              <div className="step-nav">
+                <button className="btn secondary" onClick={() => setStep(2)}>
+                  ← Back to slides
+                </button>
+                <button className="btn secondary" onClick={handleStartOver}>
+                  Start a new post
+                </button>
+              </div>
+            </>
+          )}
+        </main>
 
         {error && <div className="error-banner">{error}</div>}
       </div>
