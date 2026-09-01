@@ -1,4 +1,5 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TEXT_POST, TWEET_NAME } from "./shared/constants";
+import type { BrandMarks } from "./shared/brand";
 import type { TextPostSlide } from "./shared/types";
 
 /**
@@ -6,7 +7,7 @@ import type { TextPostSlide } from "./shared/types";
  * name header, then plain black multi-paragraph text — modeled on the
  * reference post (jamesmiddletoncoach protein breakdown).
  */
-export function renderTextPostPage(slide: TextPostSlide) {
+export function renderTextPostPage(slide: TextPostSlide, marks: BrandMarks) {
   const paragraphs = slide.text.split(/\n+/).filter((p) => p.trim().length > 0);
 
   return (
@@ -22,37 +23,19 @@ export function renderTextPostPage(slide: TextPostSlide) {
     >
       {/* header: avatar + name + verified dot */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: 64 }}>
-        <div
-          style={{
-            display: "flex",
-            width: 96,
-            height: 96,
-            borderRadius: "50%",
-            background: TEXT_POST.avatarBg,
-            color: "#FFFFFF",
-            fontFamily: "Inter",
-            fontWeight: 800,
-            fontSize: 48,
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 28,
-          }}
-        >
-          B
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={marks.avatar}
+          width={96}
+          height={96}
+          style={{ borderRadius: "50%", objectFit: "cover", marginRight: 28 }}
+          alt=""
+        />
         <div style={{ display: "flex", fontFamily: "Inter", fontWeight: 800, fontSize: 40, color: TEXT_POST.ink }}>
           {TWEET_NAME}
         </div>
-        <div
-          style={{
-            display: "flex",
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            background: TEXT_POST.check,
-            marginLeft: 14,
-          }}
-        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={marks.verified} width={34} height={34} style={{ marginLeft: 14 }} alt="" />
       </div>
 
       {/* body paragraphs */}

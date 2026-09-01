@@ -1,6 +1,7 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TWEET_CARD_BG } from "./shared/constants";
 import type { TweetCardSlide, Variant } from "./shared/types";
 import type { IconName } from "./shared/icons";
+import type { BrandMarks } from "./shared/brand";
 
 function IconStat({ icon, count, icons }: { icon: IconName; count?: string; icons: Record<IconName, string> }) {
   return (
@@ -15,7 +16,8 @@ function IconStat({ icon, count, icons }: { icon: IconName; count?: string; icon
 export function renderTweetCardPage(
   variant: Variant,
   slide: TweetCardSlide,
-  icons: Record<IconName, string>
+  icons: Record<IconName, string>,
+  marks: BrandMarks
 ) {
   const bg = TWEET_CARD_BG[variant];
 
@@ -59,31 +61,21 @@ export function renderTweetCardPage(
         }}
       >
         <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              display: "flex",
-              width: 76,
-              height: 76,
-              borderRadius: "50%",
-              background: "#3B82C4",
-              marginRight: 20,
-            }}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={marks.avatar}
+            width={76}
+            height={76}
+            style={{ borderRadius: "50%", objectFit: "cover", marginRight: 20 }}
+            alt=""
           />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ display: "flex", fontFamily: "Inter", fontWeight: 800, fontSize: 32, color: "#0F1419" }}>
                 {slide.name}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "#1DA1F2",
-                  marginLeft: 10,
-                }}
-              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={marks.verified} width={28} height={28} style={{ marginLeft: 10 }} alt="" />
             </div>
             <div style={{ display: "flex", fontFamily: "Inter", fontSize: 22, color: "#71767B" }}>
               {slide.handle} &middot; {slide.timestamp}

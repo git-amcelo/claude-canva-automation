@@ -4,7 +4,7 @@
 // the tweet template always posts as the brand (enforced server-side too).
 
 import EditableText from "./EditableText";
-import { CommentIcon, RetweetIcon, HeartIcon, BookmarkIcon, ShareIcon } from "./tweetIcons";
+import { CommentIcon, RetweetIcon, HeartIcon, BookmarkIcon, ShareIcon, VerifiedBadge } from "./tweetIcons";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TWEET_CARD_BG } from "@/lib/templates/shared/constants";
 import type { TweetCardSlide, Variant } from "@/lib/templates/shared/types";
 import type { PatchFn } from "./types";
@@ -71,11 +71,18 @@ export function renderEditableTweetCardPage(variant: Variant, slide: TweetCardSl
         }}
       >
         <div style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ display: "flex", width: 76, height: 76, borderRadius: "50%", background: "#3B82C4", marginRight: 20 }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/apple-touch-icon.png"
+            width={76}
+            height={76}
+            style={{ borderRadius: "50%", objectFit: "cover", marginRight: 20 }}
+            alt=""
+          />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ display: "flex", fontFamily: "Inter", fontWeight: 800, fontSize: 32, color: "#0F1419" }}>{slide.name}</div>
-              <div style={{ display: "flex", width: 28, height: 28, borderRadius: "50%", background: "#1DA1F2", marginLeft: 10 }} />
+              <VerifiedBadge size={28} style={{ marginLeft: 10 }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", fontFamily: "Inter", fontSize: 22, color: "#71767B" }}>
               <span>{slide.handle}&nbsp;&middot;&nbsp;</span>

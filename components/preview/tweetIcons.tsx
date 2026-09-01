@@ -60,3 +60,20 @@ export function ShareIcon({ size = 22 }: { size?: number }) {
     </svg>
   );
 }
+
+/** Blue verified badge with a white tick — mirrors assets/icons/verified.svg. */
+export function VerifiedBadge({ size = 28, style }: { size?: number; style?: React.CSSProperties }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
+      <circle cx={12} cy={12} r={12} fill="#1DA1F2" />
+      <path
+        d="M17.1 8.4 10.5 15 6.9 11.4"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

@@ -8,6 +8,7 @@ import { renderTweetCardPage } from "@/lib/templates/tweetCard";
 import { renderPhotoBubblePage } from "@/lib/templates/photoBubble";
 import { renderTextPostPage } from "@/lib/templates/textPost";
 import { loadIcons } from "@/lib/templates/shared/icons";
+import { loadBrandMarks } from "@/lib/templates/shared/brand";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TWEET_NAME, TWEET_HANDLE } from "@/lib/templates/shared/constants";
 import type { TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
@@ -81,7 +82,7 @@ async function renderSample(family: TemplateFamily, variant: Variant): Promise<B
     return renderToPngBuffer(renderColorBlockPage(0, SAMPLE_COLOR_BLOCK));
   }
   if (family === "tweetCard") {
-    const icons = await loadIcons();
+    const [icons, marks] = await Promise.all([loadIcons(), loadBrandMarks()]);
     return renderToPngBuffer(
       renderTweetCardPage(
         variant,
@@ -95,7 +96,8 @@ async function renderSample(family: TemplateFamily, variant: Variant): Promise<B
           likes: "12K",
           bookmarks: "3.4K",
         },
-        icons
+        icons,
+        marks
       )
     );
   }
@@ -103,10 +105,11 @@ async function renderSample(family: TemplateFamily, variant: Variant): Promise<B
     const photo = await samplePhotoDataUrl();
     return renderToPngBuffer(renderPhotoBubblePage(variant, { bubbleText: "Your daily choices decide your results" }, photo));
   }
+  const marks = await loadBrandMarks();
   return renderToPngBuffer(
     renderTextPostPage({
       text: "Most coaches think growing means more tools. It doesn't.\n\nOne app for streams.\nOne link for members.\nOne bill at the end of the month.\n\nSimple scales. Complicated stalls.",
-    })
+    }, marks)
   );
 }
 

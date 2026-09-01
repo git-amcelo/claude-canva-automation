@@ -4,6 +4,7 @@ import { renderTweetCardPage } from "./templates/tweetCard";
 import { renderPhotoBubblePage } from "./templates/photoBubble";
 import { renderTextPostPage } from "./templates/textPost";
 import { loadIcons } from "./templates/shared/icons";
+import { loadBrandMarks } from "./templates/shared/brand";
 import type { RenderSlideInput, Variant } from "./templates/shared/types";
 import type { GenerateCopyResult } from "./llm/schemas";
 
@@ -43,19 +44,20 @@ export async function renderSlides(input: RenderSlideInput, pageIndices?: number
   }
 
   if (input.family === "tweetCard") {
-    const icons = await loadIcons();
+    const [icons, marks] = await Promise.all([loadIcons(), loadBrandMarks()]);
     return Promise.all(
       indices.map(async (i) => {
-        const buf = await renderToPngBuffer(renderTweetCardPage(input.variant, input.slides[i], icons));
+        const buf = await renderToPngBuffer(renderTweetCardPage(input.variant, input.slides[i], icons, marks));
         return { index: i, base64: buf.toString("base64") };
       })
     );
   }
 
   if (input.family === "textPost") {
+    const marks = await loadBrandMarks();
     return Promise.all(
       indices.map(async (i) => {
-        const buf = await renderToPngBuffer(renderTextPostPage(input.slides[i]));
+        const buf = await renderToPngBuffer(renderTextPostPage(input.slides[i], marks));
         return { index: i, base64: buf.toString("base64") };
       })
     );
