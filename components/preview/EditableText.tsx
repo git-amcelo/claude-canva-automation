@@ -82,13 +82,31 @@ export default function EditableText({
       e.currentTarget.blur();
       return;
     }
-    // Insert a plain newline instead of letting contentEditable create nested
-    // <div>s on Enter, which would corrupt the plain-text read-back.
-    e.preventDefault();
-    document.execCommand("insertText", false, "\n");
+    // Multi-line: let the browser handle Enter natively. It inserts a <br>,
+    // which is correct inside a block box, and innerText turns it back into a
+    // "\n" when we commit. (See the display override below for why the box is
+    // block rather than flex.)
   }
 
   const cursor = draggable ? (drag.dragging ? "grabbing" : focused ? "text" : "grab") : undefined;
+
+  // The templates make every text box a flex ROW, because Satori requires a
+  // text node's parent to be a flex container. In a real browser that breaks
+  // editing: pressing Enter inserts a <br>, an element child becomes its own
+  // flex item, and each "line" lands in a new COLUMN beside the last.
+  //
+  // Switching to a column keeps the box sized and positioned exactly as the
+  // template intends (unlike display:block, which collapses the box and throws
+  // centring off) while stacking those line breaks vertically, as expected.
+  // The one thing that has to move: in a row, justify-content centred the text
+  // horizontally; in a column that job belongs to align-items.
+  const { justifyContent, ...restStyle } = style ?? {};
+  const layoutStyle: CSSProperties = {
+    ...restStyle,
+    display: "flex",
+    flexDirection: "column",
+    ...(justifyContent ? { alignItems: justifyContent } : {}),
+  };
 
   return (
     <div
@@ -96,7 +114,11 @@ export default function EditableText({
       contentEditable
       suppressContentEditableWarning
       className={`editable-text${draggable ? " draggable" : ""}${drag.dragging ? " is-dragging" : ""}`}
-      style={{ ...style, ...(drag.transform ? { transform: drag.transform } : {}), ...(cursor ? { cursor } : {}) }}
+      style={{
+        ...layoutStyle,
+        ...(drag.transform ? { transform: drag.transform } : {}),
+        ...(cursor ? { cursor } : {}),
+      }}
       data-placeholder={placeholder}
       onFocus={() => setFocused(true)}
       onBlur={commit}

@@ -1253,6 +1253,20 @@ input[type="number"] {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   transition: box-shadow 0.12s, background-color 0.12s;
+  /* These boxes are flex containers (Satori requires it), and a flex item
+     won't shrink below its content's intrinsic width — so an unbroken string
+     (a pasted URL, a keyboard mash) would run off the slide. min-width:0 lets
+     it shrink; overflow-wrap:anywhere lets the string break and, unlike
+     break-word, also lowers the intrinsic min-content width. Mirrors the
+     wordBreak the PNG render sets, so preview and export wrap the same way. */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  /* Enter must extend the box downward, not start a new column. Without
+     pre-wrap the browser inserts a <br>, which in a flex row becomes a
+     separate flex item sitting alongside the previous text; with pre-wrap the
+     newline stays a plain character in one text node and simply wraps. */
+  white-space: pre-wrap;
 }
 
 .editable-text:hover {
