@@ -66,8 +66,17 @@ export default function EditableText({
 
   function commit(e: FocusEvent<HTMLDivElement>) {
     setFocused(false);
-    const text = e.currentTarget.innerText.replace(/\n+$/, "");
+    const el = e.currentTarget;
+    const text = el.innerText.replace(/\n+$/, "");
     lastCommitted.current = text;
+
+    // Pressing Enter leaves a trailing <br> behind so the new line stays
+    // focusable. Stripping it from the value isn't enough on its own: the
+    // sync effect below skips a DOM write when the value is unchanged, so the
+    // empty line would survive — and on the photo bubble, where each line
+    // paints its own background, it shows up as a stray empty pill.
+    if (el.innerText !== text) el.innerText = text;
+
     if (text !== value) onChange(text);
   }
 

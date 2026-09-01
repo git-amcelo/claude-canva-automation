@@ -21,7 +21,9 @@ function Bubble({ bubble, variant, top }: { bubble: PhotoBubble; variant: Varian
   const textColor = bubble.color ? readableTextOn(bubble.color) : colors.text;
   const offset = bubble.position;
   const shift = offset && (offset.x !== 0 || offset.y !== 0) ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : {};
-  const lines = bubble.text.split("\n");
+  // Trailing blank lines are never meaningful in a callout, and each line here
+  // paints its own background — so an empty one would render as a stray pill.
+  const lines = bubble.text.replace(/\n+$/, "").split("\n");
 
   return (
     <div
