@@ -134,20 +134,22 @@ export default function PhotoUpload({
                   setOverIndex(null);
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={dataUrl} alt={`Photo ${i + 1}`} />
-                <span className="photo-thumb-idx">Slide {i + 1}</span>
-                <button
-                  type="button"
-                  className="photo-thumb-remove"
-                  aria-label={`Remove photo ${i + 1}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removePhoto(i);
-                  }}
-                >
-                  ×
-                </button>
+                <div className="photo-thumb-media">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dataUrl} alt={`Photo ${i + 1}`} />
+                  <span className="photo-thumb-idx">Slide {i + 1}</span>
+                  <button
+                    type="button"
+                    className="photo-thumb-remove"
+                    aria-label={`Remove photo ${i + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePhoto(i);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
                 {showCaptions && (
                   <textarea
                     className="photo-thumb-caption"

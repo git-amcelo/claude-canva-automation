@@ -11,7 +11,7 @@ import type { Variant } from "@/lib/templates/shared/types";
  * active slide plus a thumbnail rail to jump between slides, like a
  * slide-deck editor. Every text box is clickable and edits `copy` directly
  * and instantly; no separate "render" step is needed to see changes. PNG
- * export (for the ZIP / Canva) happens on demand from the parent.
+ * export happens on demand from the parent.
  */
 export default function SlideStage({
   copy,
@@ -75,7 +75,7 @@ export default function SlideStage({
         </div>
       )}
 
-      <p className="stage-hint">Click any text on the slide to edit it — like PPT. Layout/position tweaks: finish those in Canva.</p>
+      <p className="stage-hint">Click any text on the slide to edit it, or drag it to reposition — like PPT.</p>
     </div>
   );
 }

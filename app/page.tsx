@@ -52,8 +52,6 @@ export default function Page() {
   const [exportingAll, setExportingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [canvaBusy, setCanvaBusy] = useState(false);
-  const [canvaUrl, setCanvaUrl] = useState<string | null>(null);
 
   const showPhotoCaptions = familyOverride === "photoBubble" && contentMode === "manual";
   const needsPhoto = familyOverride === "photoBubble" && photoDataUrls.length === 0;
@@ -67,10 +65,8 @@ export default function Page() {
     return { family: "photoBubble", variant, slides: currentCopy.slides, photoDataUrls };
   }
 
-  /** Any user edit to the copy invalidates a previously-exported Canva design. */
   function handleCopyChange(next: GenerateCopyResult) {
     setCopy(next);
-    setCanvaUrl(null);
   }
 
   async function handleGenerate() {
@@ -95,7 +91,6 @@ export default function Page() {
       if (!res.ok) throw new Error(json.error || "Failed to generate the post.");
       setCopy(json.copy);
       setSelection(json.selection);
-      setCanvaUrl(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate the post.");
     } finally {
@@ -112,7 +107,6 @@ export default function Page() {
     const blank = buildBlankCopy(familyOverride, { slideCount, photoBubbleTexts: photoCaptions });
     setCopy(blank);
     setSelection({ family: familyOverride, variant: variantChoice, slideCount, auto: false });
-    setCanvaUrl(null);
   }
 
   async function handleApplyEdit() {
@@ -135,76 +129,10 @@ export default function Page() {
       if (!res.ok) throw new Error(json.error || "Failed to apply the edit.");
       setCopy(json.copy);
       setEditInstruction("");
-      setCanvaUrl(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to apply the edit.");
     } finally {
       setEditing(false);
-    }
-  }
-
-  function connectCanvaPopup(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const win = window.open("/api/canva/auth", "canva-auth", "width=620,height=820");
-      if (!win) {
-        reject(new Error("Popup blocked — allow popups for this site and try again."));
-        return;
-      }
-      const onMessage = (e: MessageEvent) => {
-        if (e.data === "canva-connected") {
-          cleanup();
-          resolve();
-        }
-      };
-      const closedTimer = setInterval(() => {
-        if (win.closed) {
-          cleanup();
-          reject(new Error("Canva window closed before connecting."));
-        }
-      }, 500);
-      function cleanup() {
-        window.removeEventListener("message", onMessage);
-        clearInterval(closedTimer);
-      }
-      window.addEventListener("message", onMessage);
-    });
-  }
-
-  async function handleEditInCanva() {
-    if (!copy || !selection || canvaBusy) return;
-    if (canvaUrl) {
-      window.open(canvaUrl, "_blank");
-      return;
-    }
-    setError(null);
-    setCanvaBusy(true);
-
-    const post = () =>
-      fetch("/api/canva/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          copy,
-          variant: selection.variant,
-          photoDataUrls: photoDataUrls.length > 0 ? photoDataUrls : undefined,
-          title: `BUCK — ${prompt.slice(0, 60) || "carousel"}`,
-        }),
-      });
-
-    try {
-      let res = await post();
-      if (res.status === 401) {
-        await connectCanvaPopup();
-        res = await post();
-      }
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to export to Canva.");
-      setCanvaUrl(json.editUrl);
-      window.open(json.editUrl, "_blank");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to export to Canva.");
-    } finally {
-      setCanvaBusy(false);
     }
   }
 
@@ -280,7 +208,6 @@ export default function Page() {
     setSelection(null);
     setEditInstruction("");
     setError(null);
-    setCanvaUrl(null);
   }
 
   return (
@@ -514,17 +441,6 @@ export default function Page() {
             </section>
 
             <div className="ship-bar">
-              <button className="btn canva-btn" onClick={handleEditInCanva} disabled={canvaBusy || !copy}>
-                {canvaBusy ? (
-                  <>
-                    <span className="spinner" /> Sending to Canva…
-                  </>
-                ) : canvaUrl ? (
-                  "Open in Canva ↗"
-                ) : (
-                  "Edit in Canva"
-                )}
-              </button>
               <button className="btn" onClick={handleDownloadAll} disabled={!copy || exportingAll}>
                 {exportingAll ? (
                   <>

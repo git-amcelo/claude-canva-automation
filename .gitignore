@@ -14,6 +14,3 @@
 *.pem
 npm-debug.log*
 *.tsbuildinfo
-
-# canva token cache
-/.canva/

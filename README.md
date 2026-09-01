@@ -49,7 +49,7 @@ The `colorBlock` template's copy is drafted as 6 small sequential calls (one per
 
 ## Notes for whoever maintains this
 
-- The 5 template looks were prototyped in Canva first (see `PLAYBOOK.md`) and then recreated as code here (`lib/templates/`) — Canva itself isn't used at runtime.
+- The template looks were originally prototyped in a design tool (see `PLAYBOOK.md` for that history) and are now defined entirely in code (`lib/templates/`). The app has no external design-tool dependency — everything renders locally.
 - Rendering uses Next.js's built-in `ImageResponse` (Satori), not a headless browser — no Chromium download required.
 - To change brand colors/fonts, edit `lib/templates/shared/constants.ts` and the font files in `assets/fonts/`.
 - `npm audit` currently reports 3 "high" advisories in Next.js's own internally-bundled `sharp`/`postcss` (its built-in image-optimizer, which this app doesn't use — we call our own top-level `sharp` directly in `lib/imageUtils.ts`). `npm audit fix --force` would downgrade Next to 14.2.35 without actually resolving the underlying advisory, so it's intentionally left as-is. Re-check `npm audit` occasionally in case upstream ships a real fix.

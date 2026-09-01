@@ -30,7 +30,7 @@ export function renderTweetCardPage(
         overflow: "hidden",
       }}
     >
-      {/* diagonal accent shape — same offsets used in the Canva prototype */}
+      {/* diagonal accent shape */}
       <div
         style={{
           display: "flex",
