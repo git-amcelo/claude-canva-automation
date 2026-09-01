@@ -66,12 +66,12 @@ function EditableBubble({
         ...(drag.transform ? { transform: drag.transform } : {}),
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", maxWidth: 900 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", maxWidth: 900, textAlign: "center" }}>
         <div
           onPointerDown={drag.onPointerDown}
           onDoubleClick={(e) => onBubbleClick(e, slideIndex, bubbleIndex)}
           title="Drag to move · double-click to recolour"
-          style={{ cursor: drag.dragging ? "grabbing" : "grab", touchAction: "none" }}
+          style={{ cursor: drag.dragging ? "grabbing" : "grab", touchAction: "none", textAlign: "center" }}
         >
           <EditableText
             value={bubble.text}
