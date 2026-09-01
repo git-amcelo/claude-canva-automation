@@ -60,7 +60,7 @@ code pointing at `/share/<id>` on this app's own domain.
 - **On Vercel** the filesystem is read-only, so create a Blob store under
   Storage in the dashboard. That sets `BLOB_READ_WRITE_TOKEN` automatically and
   the app switches to it with no code change.
-- Links expire after `SHARE_TTL_DAYS` (7 by default). `vercel.json` runs
+- Links expire after `SHARE_TTL_DAYS` (1 day by default). `vercel.json` runs
   `/api/share/cleanup` daily to delete expired bundles.
 - **Deployment Protection must stay off**, otherwise opening the share link on a
   phone demands a Vercel login and the QR is unusable. See the deploy section

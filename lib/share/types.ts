@@ -11,4 +11,4 @@ export interface ShareBundle {
 }
 
 /** Days a share link stays alive before cleanup removes it. */
-export const SHARE_TTL_DAYS = Number(process.env.SHARE_TTL_DAYS || 7);
+export const SHARE_TTL_DAYS = Number(process.env.SHARE_TTL_DAYS || 1);
