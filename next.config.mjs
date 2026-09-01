@@ -16,7 +16,17 @@ const nextConfig = {
   // so without this, assets/ is missing in production and every render route
   // throws ENOENT. Locally it works regardless, because the repo is on disk.
   outputFileTracingIncludes: {
-    "/api/**": ["./assets/**", "./public/apple-touch-icon.png"],
+    "/api/**": [
+      "./assets/**",
+      "./public/apple-touch-icon.png",
+      // sharp is marked external above, so it loads from node_modules at
+      // runtime. It pulls its native binary from a separate @img/sharp-<platform>
+      // package via a runtime require, which the tracer can't follow — so
+      // without these the module throws on import and every route that touches
+      // it 500s before its own error handling can run.
+      "./node_modules/sharp/**",
+      "./node_modules/@img/**",
+    ],
   },
 };
 

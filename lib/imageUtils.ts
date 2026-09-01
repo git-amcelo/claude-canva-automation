@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { getSharp } from "./sharpLoader";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "./templates/shared/constants";
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
@@ -30,6 +30,7 @@ export async function cropPhotoToCanvas(buffer: Buffer, mimeType: string): Promi
     );
   }
 
+  const sharp = await getSharp();
   const output = await sharp(buffer)
     .rotate() // apply EXIF orientation
     .resize(CANVAS_WIDTH, CANVAS_HEIGHT, { fit: "cover", position: "attention" })
@@ -63,6 +64,7 @@ export async function cropPhotoToBox(buffer: Buffer, mimeType: string, box: Crop
   }
 
   // .rotate() first so the box lines up with what the user actually saw.
+  const sharp = await getSharp();
   const upright = await sharp(buffer).rotate().toBuffer();
   const { width = 0, height = 0 } = await sharp(upright).metadata();
 

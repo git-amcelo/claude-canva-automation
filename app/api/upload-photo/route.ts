@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cropPhotoToBox, cropPhotoToCanvas, UnsupportedImageError } from "@/lib/imageUtils";
+import { ImageEngineError } from "@/lib/sharpLoader";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -37,6 +38,10 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof UnsupportedImageError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
+    }
+    // Report this as JSON rather than letting it become an opaque 500 page.
+    if (err instanceof ImageEngineError) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
     }
     const message = err instanceof Error ? err.message : "Failed to process photo.";
     return NextResponse.json({ error: message }, { status: 500 });

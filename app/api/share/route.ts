@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
+import { getSharp } from "@/lib/sharpLoader";
 import { renderSlides } from "@/lib/renderSlides";
 import { newShareId, putBundle, putImage } from "@/lib/share/store";
 import { SHARE_TTL_DAYS, type ShareBundle } from "@/lib/share/types";
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const sharp = await getSharp();
     const id = newShareId();
     const rendered = await renderSlides(body.input);
 

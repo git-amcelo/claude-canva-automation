@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { renderToPngBuffer } from "@/lib/render";
 import { renderColorBlockPage } from "@/lib/templates/colorBlock";
 import { renderTweetCardPage } from "@/lib/templates/tweetCard";
@@ -9,6 +8,7 @@ import { renderPhotoBubblePage } from "@/lib/templates/photoBubble";
 import { renderTextPostPage } from "@/lib/templates/textPost";
 import { loadIcons } from "@/lib/templates/shared/icons";
 import { loadBrandMarks } from "@/lib/templates/shared/brand";
+import { getSharp } from "@/lib/sharpLoader";
 import { CANVAS_WIDTH, CANVAS_HEIGHT, TWEET_NAME, TWEET_HANDLE } from "@/lib/templates/shared/constants";
 import type { TemplateFamily, Variant } from "@/lib/templates/shared/types";
 
@@ -31,8 +31,17 @@ async function samplePhotoDataUrl(): Promise<string> {
   }
 }
 
-/** Simple vertical-gradient placeholder "photo" for the photoBubble sample. */
+/**
+ * Simple vertical-gradient placeholder "photo" for the photoBubble sample,
+ * used only when the real sample file is missing.
+ *
+ * sharp is imported here rather than at the top of the file on purpose: it
+ * loads a native binary, and if that fails the throw happens at import time,
+ * taking down the whole route before any handler runs. Keeping it inside the
+ * fallback means the samples still render from the real photo either way.
+ */
 async function placeholderPhotoDataUrl(): Promise<string> {
+  const sharp = await getSharp();
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
   const raw = Buffer.alloc(w * h * 3);
@@ -144,6 +153,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ fami
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to render sample.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Plain text so the reason is visible even when this is loaded as an <img>.
+    return new NextResponse(message, { status: 500, headers: { "Content-Type": "text/plain" } });
   }
 }
