@@ -68,11 +68,20 @@ export function enforceStaticTweetIdentity(copy: GenerateCopyResult): GenerateCo
   return copy;
 }
 
-/** Accepts either the model's `{ bubbleText }` or an already-normalised slide. */
+/**
+ * Accepts either the model's `{ bubbleText }` or an already-normalised slide
+ * (which is what comes back from an AI edit).
+ *
+ * Callout text is trimmed either way: every line of a bubble paints its own
+ * background, so a model that ends its text on a newline would hand us a stray
+ * empty pill on the slide and in the export.
+ */
 function normalizePhotoBubbleSlide(slide: PhotoBubbleSlide | { bubbleText?: string }): PhotoBubbleSlide {
-  if ("bubbles" in slide && Array.isArray(slide.bubbles)) return slide;
+  if ("bubbles" in slide && Array.isArray(slide.bubbles)) {
+    return { ...slide, bubbles: slide.bubbles.map((b) => ({ ...b, text: b.text.replace(/\s+$/, "") })) };
+  }
   const text = "bubbleText" in slide ? (slide.bubbleText ?? "") : "";
-  return { bubbles: [{ text }] };
+  return { bubbles: [{ text: text.replace(/\s+$/, "") }] };
 }
 
 export interface GenerateCopyInput {

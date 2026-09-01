@@ -8,6 +8,23 @@ import type { Offset } from "@/lib/templates/shared/types";
 const noop = () => {};
 
 /**
+ * A run of blank lines at the end of the content: each newline plus whatever
+ * whitespace trails it. Anything this matches renders as an empty line — and
+ * on a photo bubble, where every line paints its own background, as an empty
+ * pill hanging under the callout.
+ */
+const TRAILING_BLANK_LINES = /(?:\n[^\S\n]*)+$/;
+
+/** A block the browser left behind for a line that has nothing on it. */
+function isBlankBlock(node: ChildNode) {
+  return (
+    node.nodeType === Node.ELEMENT_NODE &&
+    (node.nodeName === "DIV" || node.nodeName === "P") &&
+    (node as Element).textContent?.trim() === ""
+  );
+}
+
+/**
  * A text block that's editable in place by clicking on it — like PowerPoint —
  * and optionally draggable to reposition. Renders with the exact same styling
  * the final PNG uses, so what you see is what you export.
@@ -47,7 +64,7 @@ export default function EditableText({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.innerText = value;
+    el.innerText = value.replace(TRAILING_BLANK_LINES, "");
     lastCommitted.current = value;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -59,7 +76,7 @@ export default function EditableText({
     if (!el) return;
     if (document.activeElement === el) return;
     if (value !== lastCommitted.current) {
-      el.innerText = value;
+      el.innerText = value.replace(TRAILING_BLANK_LINES, "");
       lastCommitted.current = value;
     }
   }, [value]);
@@ -67,7 +84,7 @@ export default function EditableText({
   function commit(e: FocusEvent<HTMLDivElement>) {
     setFocused(false);
     const el = e.currentTarget;
-    const text = el.innerText.replace(/\n+$/, "");
+    const text = el.innerText.replace(TRAILING_BLANK_LINES, "");
     lastCommitted.current = text;
 
     // Stripping the blank line from the value isn't enough on its own: the
@@ -118,21 +135,31 @@ export default function EditableText({
     if (!el) return;
 
     // Walk back over the trailing line breaks to find where the run starts.
+    // It comes in every shape the browser has ever used for an empty line:
+    // newlines in a text node, a <br>, or a block with nothing in it.
     let start: ChildNode | null = null;
-    let startOffset = -1; // -1 means the whole node (a <br>)
+    let startOffset = -1; // -1 means the whole node
     for (let node: ChildNode | null = el.lastChild; node; node = node.previousSibling) {
       if (node.nodeType === Node.TEXT_NODE) {
-        const match = /\n+$/.exec((node as Text).data);
-        if (!match) break;
-        start = node;
-        startOffset = match.index;
-        if (match.index > 0) break; // run starts inside this node
-      } else if (node.nodeName === "BR") {
-        start = node;
-        startOffset = -1;
-      } else {
+        const data = (node as Text).data;
+        const match = TRAILING_BLANK_LINES.exec(data);
+        if (match) {
+          start = node;
+          startOffset = match.index;
+          if (match.index > 0) break; // the run starts inside this node
+          continue;
+        }
+        // An emptied-out text node paints nothing itself but would hide the
+        // run behind it from this walk — step over it.
+        if (/^[^\S\n]*$/.test(data)) continue;
         break;
       }
+      if (node.nodeName === "BR" || isBlankBlock(node)) {
+        start = node;
+        startOffset = -1;
+        continue;
+      }
+      break;
     }
     if (!start) return;
 
@@ -155,7 +182,7 @@ export default function EditableText({
         below.setStart(caret.startContainer, caret.startOffset);
         below.setEnd(el, el.childNodes.length);
         const rest = below.cloneContents();
-        if (rest.textContent?.includes("\n") || rest.querySelector("br")) return;
+        if (rest.textContent?.includes("\n") || rest.querySelector("br, div, p")) return;
       }
     }
 
@@ -203,7 +230,12 @@ export default function EditableText({
         ...(cursor ? { cursor } : {}),
       }}
       data-placeholder={placeholder}
-      onFocus={() => setFocused(true)}
+      onFocus={() => {
+        setFocused(true);
+        // A blank line left over from an earlier session is stranded before the
+        // user has even typed — clear it on the way in.
+        trimTrailingBlankLines();
+      }}
       onBlur={commit}
       onKeyDown={handleKeyDown}
       onInput={trimTrailingBlankLines}
