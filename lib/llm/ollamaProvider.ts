@@ -3,7 +3,7 @@ import { BRAND_VOICE, TOOL_SCHEMAS, RESPONSE_SCHEMAS, CaptionSchema, buildUserPr
 import type { GenerateCopyInput, GenerateCopyResult, JsonSchema } from "./schemas";
 
 const DEFAULT_BASE_URL = "http://localhost:11434";
-const DEFAULT_MODEL = "qwen2.5-coder:7b";
+const DEFAULT_MODEL = "qwen3:14b";
 const REQUEST_TIMEOUT_MS = 120_000; // local inference can be slow, especially on CPU
 const MAX_ATTEMPTS = 3;
 

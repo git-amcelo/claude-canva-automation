@@ -11,7 +11,7 @@ Set by `LLM_PROVIDER` in `.env.local` — a switch between two backends:
 | Cost | Free | Billed per use on your Anthropic account |
 | Where it works | **Local dev only** — Ollama on `localhost` isn't reachable from Vercel | Anywhere, including Vercel |
 | Reliability | Good, occasionally needs a retry (handled automatically) | Best |
-| Setup | Install [Ollama](https://ollama.com), `ollama pull qwen2.5-coder:7b` (or another tool-calling-capable model — llama3.1 and mistral-nemo also work), run `ollama serve` | Get a key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| Setup | Install [Ollama](https://ollama.com), `ollama pull qwen3:14b` (or another tool-calling-capable model — llama3.1 and mistral-nemo also work), run `ollama serve` | Get a key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
 
 Currently set to `ollama` for free local development. **Switch to `anthropic` before deploying to Vercel** — this is the one setting that will silently break copy generation in production if forgotten, since Vercel's servers can't reach your laptop's Ollama instance.
 
@@ -37,7 +37,7 @@ The `colorBlock` template's copy is drafted as 6 small sequential calls (one per
 ## Running it locally (for development)
 
 1. Install [Node.js](https://nodejs.org) 20+.
-2. Copy `.env.local.example` to `.env.local`. Default (`LLM_PROVIDER=ollama`) needs [Ollama](https://ollama.com) installed with a tool-calling model pulled (`ollama pull qwen2.5-coder:7b`) and `ollama serve` running — or switch to `LLM_PROVIDER=anthropic` and paste in an API key instead.
+2. Copy `.env.local.example` to `.env.local`. Default (`LLM_PROVIDER=ollama`) needs [Ollama](https://ollama.com) installed with a tool-calling model pulled (`ollama pull qwen3:14b`) and `ollama serve` running — or switch to `LLM_PROVIDER=anthropic` and paste in an API key instead.
 3. Double-click **`start.command`** (macOS) — first run installs dependencies, then opens `http://localhost:3000` automatically. Leave the Terminal window open; closing it stops the app. If macOS blocks the double-click the first time: right-click → Open → confirm.
    - Or manually: `npm install && npm run dev`.
 
